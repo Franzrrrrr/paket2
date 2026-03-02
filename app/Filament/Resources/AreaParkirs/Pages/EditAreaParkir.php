@@ -16,4 +16,12 @@ class EditAreaParkir extends EditRecord
             DeleteAction::make(),
         ];
     }
+
+    function afterSave(): void
+    {
+        \App\Models\LogAktivitas::create([
+            'user_id' => auth()->id(),
+            'aktivitas' => 'Mengedit area parkir dengan ID ' . $this->record->name,
+        ]);
+    }
 }

@@ -16,4 +16,12 @@ class EditTarif extends EditRecord
             DeleteAction::make(),
         ];
     }
+
+    function afterSave(): void
+    {
+        \App\Models\LogAktivitas::create([
+            'user_id' => auth()->id(),
+            'aktivitas' => 'Mengedit tarif dengan nama ' . $this->record->name,
+        ]);
+    }
 }

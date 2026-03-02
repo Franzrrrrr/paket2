@@ -19,8 +19,8 @@ class Transaksi extends Model
     ];
 
     protected $casts = [
-        'waktu_masuk' => 'date',
-        'waktu_keluar' => 'date',
+        'waktu_masuk' => 'datetime',
+        'waktu_keluar' => 'datetime',
     ];
 
     public function kendaraan()

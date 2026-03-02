@@ -1,0 +1,26 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
+
+.fi-main-ctn {
+    background-color: #f0ead2 !important;
+}
+
+.fi-topbar {
+    background-color: #d1c699 !important;
+}
+
+.fi-sidebar-nav {
+    background-color: #f7f5ef !important;
+
+    .fi-sidebar-nav-link {
+        color: #333 !important;
+
+        &.fi-sidebar-nav-link-active {
+            background-color: #d1c699 !important;
+            color: #333 !important;
+        }
+    }
+}

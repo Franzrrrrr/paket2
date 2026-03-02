@@ -16,4 +16,13 @@ class EditUser extends EditRecord
             DeleteAction::make(),
         ];
     }
+
+    function afterSave(): void
+    {
+        \App\Models\LogAktivitas::create
+        ([
+            'user_id' => auth()->id(),
+            'aktivitas' => 'Mengedit pengguna dengan nama ' . $this->record->name,
+        ]);
+    }
 }

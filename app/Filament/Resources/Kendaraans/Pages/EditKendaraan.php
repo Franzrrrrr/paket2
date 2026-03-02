@@ -16,4 +16,12 @@ class EditKendaraan extends EditRecord
             DeleteAction::make(),
         ];
     }
+
+    function afterSave(): void
+    {
+        \App\Models\LogAktivitas::create([
+            'user_id' => auth()->id(),
+            'aktivitas' => 'Mengedit kendaraan dengan nomor ' . $this->record->nomor_kendaraan,
+        ]);
+    }
 }
