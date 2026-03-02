@@ -2,14 +2,19 @@
 
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
 
 
-.fi-main-ctn {
-    background-color: #f0ead2 !important;
+
+/* .fi-main-ctn {
+    background-color: #093653 !important;
 }
 
 .fi-topbar {
-    background-color: #d1c699 !important;
+    background-color: #093653 !important;
 }
 
 .fi-sidebar-nav {
@@ -19,8 +24,12 @@
         color: #333 !important;
 
         &.fi-sidebar-nav-link-active {
-            background-color: #d1c699 !important;
+            background-color: #093653 !important;
             color: #333 !important;
         }
     }
 }
+
+.li.fi-sidebar-item.fi-sidebar-item-has-url {
+    color: #333;
+} */

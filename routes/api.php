@@ -8,10 +8,6 @@ use Illuminate\Support\Facades\Route;
 //     return $request->user();
 // })->middleware('auth:sanctum');
 
-Route::get('/user', function (Request $request) {
-    return response()->json(['message' => [
-        'id' => '1',
-        'name' => 'nama',
-        'email' => 'email@gmail.com',
-    ]]);
+Route::get('/', function (Request $request) {
+    return response()->json();
 });
