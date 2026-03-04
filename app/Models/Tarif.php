@@ -9,6 +9,7 @@ class Tarif extends Model
     protected $fillable = [
         'jenis_kendaraan',
         'tarif_per_jam',
+        'denda_inap_per_hari',
     ];
 
     public function transaksis()

@@ -18,7 +18,7 @@ class TarifResource extends Resource
 {
     protected static ?string $model = Tarif::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-banknotes';
 
     public static function form(Schema $schema): Schema
     {

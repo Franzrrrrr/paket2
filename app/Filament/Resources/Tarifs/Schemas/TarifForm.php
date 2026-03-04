@@ -18,6 +18,11 @@ class TarifForm
                 TextInput::make('tarif_per_jam')
                     ->required()
                     ->numeric(),
+                TextInput::make('denda_inap_per_hari')
+                    ->label('Denda Menginap (Per Hari)')
+                    ->numeric()
+                    ->default(0)
+                    ->required(),
             ]);
     }
 }

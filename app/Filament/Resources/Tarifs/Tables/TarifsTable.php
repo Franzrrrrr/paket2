@@ -19,6 +19,10 @@ class TarifsTable
                 TextColumn::make('tarif_per_jam')
                     ->numeric()
                     ->sortable(),
+                TextColumn::make('denda_inap_per_hari')
+                    ->label('Denda Menginap (Rp)')
+                    ->numeric()
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

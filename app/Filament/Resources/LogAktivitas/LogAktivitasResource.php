@@ -18,7 +18,7 @@ class LogAktivitasResource extends Resource
 {
     protected static ?string $model = LogAktivitas::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clock';
 
     public static function form(Schema $schema): Schema
     {
