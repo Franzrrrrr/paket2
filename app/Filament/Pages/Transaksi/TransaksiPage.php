@@ -91,8 +91,11 @@ class TransaksiPage extends Page implements HasTable
                     ->button()
                     ->icon('heroicon-o-eye')
                     ->hidden(fn ($record) => is_null($record->waktu_keluar))
-                    // ->url(fn ($record) => route('filament.resources.transaksis.view', $record))
-                    ->openUrlInNewTab(),
+                    ->url(fn ($record) => route(
+                        'filament.admin.pages.transaksi.{record}.detail',
+                        ['record' => $record->id]
+                    ))
+                    ->openUrlInNewTab()
             ]);
     }
 
