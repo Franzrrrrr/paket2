@@ -13,3 +13,4 @@ Route::get('/', function (Request $request) {
 Route::get('/area-parkir', [AreaParkirController::class, 'index']);
 Route::get('/area-parkir/{id}', [AreaParkirController::class, 'show']);
 Route::get('/area-parkir/parked-vehicles', [AreaParkirController::class, 'parkedVehicles']);
+

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Pages;
+namespace App\Filament\Pages\Transaksi;
 
 use Filament\Pages\Page;
 use App\Models\Transaksi;
@@ -11,6 +11,7 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Actions\Action;
 use Carbon\Carbon;
+use Filament\Actions\Action as ActionsAction;
 
 class TransaksiPage extends Page implements HasTable
 {
@@ -62,7 +63,7 @@ class TransaksiPage extends Page implements HasTable
                 //
             ])
             ->actions([
-                Action::make('Checkout')
+                ActionsAction::make('Checkout')
                     ->button()
                     ->color('danger')
                     ->icon('heroicon-o-arrow-right-on-rectangle')
@@ -86,6 +87,12 @@ class TransaksiPage extends Page implements HasTable
                         $record->status = 'selesai';
                         $record->save();
                     }),
+                ActionsAction::make('view')
+                    ->button()
+                    ->icon('heroicon-o-eye')
+                    ->hidden(fn ($record) => is_null($record->waktu_keluar))
+                    // ->url(fn ($record) => route('filament.resources.transaksis.view', $record))
+                    ->openUrlInNewTab(),
             ]);
     }
 
