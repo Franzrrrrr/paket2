@@ -2,16 +2,17 @@
 
 namespace App\Filament\Pages\Transaksi;
 
-use Filament\Pages\Page;
 use App\Models\Transaksi;
 use BackedEnum;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Concerns\InteractsWithTable;
-use Filament\Tables\Actions\Action;
 use Carbon\Carbon;
 use Filament\Actions\Action as ActionsAction;
+use Filament\Tables;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
+use Filament\Pages\Page;
 
 class TransaksiPage extends Page implements HasTable
 {
@@ -21,81 +22,105 @@ class TransaksiPage extends Page implements HasTable
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
 
+    protected static ?string $navigationLabel = 'Transaksi Page';
+
     public function table(Table $table): Table
     {
         return $table
-            ->query(Transaksi::query())
+            ->query(Transaksi::query()->with(['kendaraan', 'areaParkir', 'tarif']))
             ->columns([
                 TextColumn::make('id')
                     ->label('ID')
                     ->sortable(),
+
                 TextColumn::make('kendaraan.plat_nomor')
                     ->label('Plat Nomor')
                     ->searchable()
                     ->sortable(),
+
                 TextColumn::make('waktu_masuk')
                     ->label('Waktu Masuk')
                     ->dateTime('d-m-Y H:i')
                     ->sortable(),
+
                 TextColumn::make('waktu_keluar')
                     ->label('Waktu Keluar')
                     ->dateTime('d-m-Y H:i')
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('-'),
+
                 TextColumn::make('durasi_jam')
                     ->label('Durasi (Jam)')
-                    // ->numeric(decimals: 1)
+                    ->suffix(' jam')
+                    ->placeholder('-')
                     ->sortable(),
+
                 TextColumn::make('biaya_total')
                     ->label('Biaya Total')
                     ->money('IDR')
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('-'),
+
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'aktif' => 'warning',
-                        'selesai' => 'success',
+                    ->color(fn(string $state): string => match ($state) {
+                        'masuk'      => 'warning',
+                        'selesai'    => 'success',
                         'dibatalkan' => 'danger',
-                        default => 'gray',
+                        default      => 'gray',
                     }),
             ])
             ->filters([
                 //
             ])
             ->actions([
-                ActionsAction::make('Checkout')
+                // Checkout — hanya tampil jika belum keluar
+                ActionsAction::make('checkout')
+                    ->label('Checkout')
                     ->button()
                     ->color('danger')
                     ->icon('heroicon-o-arrow-right-on-rectangle')
-                    ->visible(fn ($record) => is_null($record->waktu_keluar))
+                    ->visible(fn(Transaksi $record): bool => is_null($record->waktu_keluar))
                     ->requiresConfirmation()
-                    ->action(function ($record) {
+                    ->modalHeading('Konfirmasi Checkout')
+                    ->modalDescription(fn(Transaksi $record) => "Checkout kendaraan {$record->kendaraan->plat_nomor}?")
+                    ->action(function (Transaksi $record): void {
                         $record->waktu_keluar = now();
                         $diffInHours = ceil($record->waktu_masuk->diffInHours($record->waktu_keluar)) ?: 1;
-                        
+
                         $tarif_per_jam = $record->tarif->tarif_per_jam ?? 0;
-                        
-                        // Cek inap
-                        $diffInDays = $record->waktu_masuk->startOfDay()->diffInDays($record->waktu_keluar->startOfDay());
-                        $denda_inap = $record->tarif->denda_inap_per_hari ?? 0;
 
-                        $biaya_parkir = $diffInHours * $tarif_per_jam;
-                        $biaya_inap = $diffInDays * $denda_inap;
+                        $diffInDays  = $record->waktu_masuk->startOfDay()->diffInDays($record->waktu_keluar->startOfDay());
+                        $denda_inap  = $record->tarif->denda_inap_per_hari ?? 0;
 
-                        $record->durasi_jam = $diffInHours;
-                        $record->biaya_total = $biaya_parkir + $biaya_inap;
-                        $record->status = 'selesai';
+                        $record->durasi_jam  = $diffInHours;
+                        $record->biaya_total = ($diffInHours * $tarif_per_jam) + ($diffInDays * $denda_inap);
+                        $record->status      = 'selesai';
                         $record->save();
                     }),
+
+                // View Detail — hanya tampil setelah checkout
                 ActionsAction::make('view')
+                    ->label('Detail')
                     ->button()
+                    ->color('info')
                     ->icon('heroicon-o-eye')
-                    ->hidden(fn ($record) => is_null($record->waktu_keluar))
-                    ->url(fn ($record) => route(
+                    ->visible(fn(Transaksi $record): bool => !is_null($record->waktu_keluar))
+                    ->url(fn(Transaksi $record): string => route(
                         'filament.admin.pages.transaksi.{record}.detail',
                         ['record' => $record->id]
-                    ))
-                    ->openUrlInNewTab()
+                    )),
+
+                // Cetak Struk — hanya tampil setelah checkout
+                ActionsAction::make('cetak')
+                    ->label('Cetak')
+                    ->button()
+                    ->color('success')
+                    ->icon('heroicon-o-printer')
+                    ->visible(fn(Transaksi $record): bool => !is_null($record->waktu_keluar))
+                    ->url(fn(Transaksi $record): string => route('transaksi.struk', $record->id))
+                    ->openUrlInNewTab(),
             ]);
     }
 
