@@ -43,7 +43,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
-               
+
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -64,6 +64,8 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->sidebarCollapsibleOnDesktop()
             ->sidebarFullyCollapsibleOnDesktop()
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('5')
             ->font('Poppins')
             ->brandName('Smart Parking')
             ->spa()

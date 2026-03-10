@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1befc6adf973b43d41b108cf884d73f4",
+    "content-hash": "df9c9416f85f925fd1dd3f2eaef8c2d5",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -1249,6 +1249,48 @@
                 }
             ],
             "time": "2025-10-31T18:51:33+00:00"
+        },
+        {
+            "name": "eduardoribeirodev/filament-leaflet",
+            "version": "v4.7.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/eduardoribeirodev/filament-leaflet.git",
+                "reference": "360bc39ceb0fb5dc4fa703bf891f7f116e3d32bf"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/eduardoribeirodev/filament-leaflet/zipball/360bc39ceb0fb5dc4fa703bf891f7f116e3d32bf",
+                "reference": "360bc39ceb0fb5dc4fa703bf891f7f116e3d32bf",
+                "shasum": ""
+            },
+            "require": {
+                "filament/filament": "^4.0|^5.0",
+                "php": "^8.1"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "EduardoRibeiroDev\\FilamentLeaflet\\FilamentLeafletServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "EduardoRibeiroDev\\FilamentLeaflet\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Um widget de mapa para FilamentPHP.",
+            "support": {
+                "issues": "https://github.com/eduardoribeirodev/filament-leaflet/issues",
+                "source": "https://github.com/eduardoribeirodev/filament-leaflet/tree/v4.7.1"
+            },
+            "time": "2026-03-09T16:13:56+00:00"
         },
         {
             "name": "egulias/email-validator",
