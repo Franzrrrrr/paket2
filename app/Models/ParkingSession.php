@@ -8,14 +8,18 @@ class ParkingSession extends Model
 {
     protected $fillable = [
         'ticket_code',
-        'user_id',
         'vehicle_id',
         'parking_area_id',
         'entry_time',
         'exit_time',
-        'duration_minutes',
-        'total_price',
+        'duration',
         'status'
+    ];
+
+    protected $casts = [
+        'entry_time' => 'datetime',
+        'exit_time' => 'datetime',
+        'duration' => 'integer'
     ];
 
     public function user()
