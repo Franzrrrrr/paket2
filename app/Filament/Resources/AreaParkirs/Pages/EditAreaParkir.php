@@ -17,11 +17,21 @@ class EditAreaParkir extends EditRecord
         ];
     }
 
-    function afterSave(): void
+    protected function afterSave(): void
     {
         \App\Models\LogAktivitas::create([
             'user_id' => auth()->id(),
-            'aktivitas' => 'Mengedit area parkir dengan ID ' . $this->record->name,
+            'aktivitas' => 'Mengedit area parkir dengan nama ' . $this->record->nama_area,
         ]);
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
+    protected function getSavedNotificationMessage(): ?string
+    {
+        return 'Area Parkir telah di ubah!';
     }
 }

@@ -15,7 +15,7 @@ class AreaParkirController extends Controller
      */
     public function index(): JsonResponse
     {
-        $areas = AreaParkir::all()->map(fn($area) => $this->formatArea($area));
+        $areas = AreaParkir::with('tarifs')->get()->map(fn($area) => $this->formatArea($area));
 
         return response()->json(['data' => $areas]);
     }
@@ -25,7 +25,7 @@ class AreaParkirController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $area = AreaParkir::findOrFail($id);
+        $area = AreaParkir::with('tarifs')->findOrFail($id);
 
         return response()->json($this->formatArea($area));
     }
@@ -83,6 +83,19 @@ class AreaParkirController extends Controller
             default      => 'Tersedia',
         };
 
+        // Format tariffs
+        $tarifs = $area->tarifs->mapWithKeys(function ($tarif) {
+            return [
+                strtolower($tarif->jenis_kendaraan) => [
+                    'tarif_per_menit' => $tarif->tarif_per_menit,
+                    'tarif_per_jam' => $tarif->tarif_per_jam,
+                    'tarif_akumulasi_menit' => $tarif->tarif_akumulasi_menit,
+                    'tarif_akumulasi_jam' => $tarif->tarif_akumulasi_jam,
+                    'denda_inap_per_hari' => $tarif->denda_inap_per_hari,
+                ]
+            ];
+        });
+
         return [
             'id'             => $area->id,
             'nama_area'      => $area->nama_area,
@@ -94,6 +107,7 @@ class AreaParkirController extends Controller
             'sisa'           => $area->kapasitas - $area->terisi,
             'occupancy_rate' => $rate,
             'status'         => $status,
+            'tarifs'         => $tarifs,
         ];
     }
 }

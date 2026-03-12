@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { parkingAreasAPI, bookingAPI, ParkingArea, Vehicle, vehicleAPI } from '@/lib/api';
+import { parkingAreasAPI, bookingAPI, ParkingArea, Vehicle, vehicleAPI, RatesResponse } from '@/lib/api';
 import { ArrowLeft, Car, MapPin, Clock, CheckCircle2, ChevronRight, Loader2 } from 'lucide-react';
 
 export default function NewBookingPage() {
@@ -10,14 +10,17 @@ export default function NewBookingPage() {
   const searchParams = useSearchParams();
   const areaId       = searchParams.get('area');
   const [parkingAreas, setParkingAreas]         = useState<ParkingArea[]>([]);
-  const [vehicles, setVehicles]                 = useState<Vehicle[]>([]);
+  const [rates, setRates]                       = useState<RatesResponse | null>(null);
   const [selectedArea, setSelectedArea]         = useState<ParkingArea | null>(null);
-  const [selectedVehicle, setSelectedVehicle]   = useState<number | null>(null);
+  const [selectedVehicleType, setSelectedVehicleType] = useState<'Mobil' | 'Motor' | null>(null);
   const [estimatedDuration, setEstimatedDuration] = useState('');
   const [isLoading, setIsLoading]               = useState(false);
   const [error, setError]                       = useState('');
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   useEffect(() => {
     if (areaId && parkingAreas.length > 0) {
       const area = parkingAreas.find(a => a.id === parseInt(areaId));
@@ -27,18 +30,8 @@ export default function NewBookingPage() {
 
   const fetchData = async () => {
     try {
-      const mockVehicles: Vehicle[] = [
-        { id: 1, plat_nomor: 'Mobil', jenis_kendaraan: 'Mobil', user_id: 1 },
-        { id: 2, plat_nomor: 'Motor', jenis_kendaraan: 'Motor', user_id: 1 },
-      ];
       const areasData = await parkingAreasAPI.getAll();
       setParkingAreas(Array.isArray(areasData) ? areasData : []);
-      const vehiclesData = await vehicleAPI.getAll();
-      setVehicles(
-        Array.isArray(vehiclesData?.data)
-          ? vehiclesData.data
-          : mockVehicles
-      );
     } catch (err) {
       console.error('Failed to fetch data:', err);
     }
@@ -46,15 +39,15 @@ export default function NewBookingPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!selectedArea || !selectedVehicle) {
-      setError('Silakan pilih area parkir dan kendaraan');
+    if (!selectedArea || !selectedVehicleType) {
+      setError('Silakan pilih area parkir dan tipe kendaraan');
       return;
     }
     setIsLoading(true);
     setError('');
     try {
       const response = await bookingAPI.book({
-        vehicle_id: selectedVehicle,
+        vehicle_type: selectedVehicleType,
         parking_area_id: selectedArea.id,
         estimated_duration: estimatedDuration ? parseInt(estimatedDuration) : undefined,
       });
@@ -75,8 +68,12 @@ export default function NewBookingPage() {
 
   const occBar = (occ: number) => occ >= 100 ? 'bg-red-400' : occ >= 80 ? 'bg-amber-400' : 'bg-green-400';
 
-  const estimatedCost = estimatedDuration
-    ? Math.max(1, Math.ceil(parseInt(estimatedDuration) / 60)) * 2000
+  const estimatedCost = estimatedDuration && selectedVehicleType && selectedArea
+    ? Math.max(1, Math.ceil(parseInt(estimatedDuration) / 60)) * (
+        selectedVehicleType === 'Mobil'
+            ? (selectedArea.tarifs?.mobil?.tarif_per_jam || 3000)
+            : (selectedArea.tarifs?.motor?.tarif_per_jam || 2000)
+      )
     : null;
 
   return (
@@ -150,45 +147,79 @@ export default function NewBookingPage() {
             </div>
           </div>
 
-          {/* ── Pilih Kendaraan ── */}
+          {/* ── Pilih Tipe Kendaraan ── */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-100">
               <Car size={15} className="text-blue-500" />
-              <span className="text-sm font-bold text-slate-800">Pilih Kendaraan</span>
+              <span className="text-sm font-bold text-slate-800">Pilih Tipe Kendaraan</span>
             </div>
             <div className="p-4 space-y-2.5">
-              {vehicles.map((vehicle) => {
-                const isActive = selectedVehicle === vehicle.id;
-                return (
+              {selectedArea?.tarifs && (
+                <>
                   <label
-                    key={vehicle.id}
-                    className={`flex items-center justify-between p-3.5 rounded-xl border-2 cursor-pointer transition-all
-                      ${isActive
+                    className={`flex items-center justify-between p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+                      selectedVehicleType === 'Mobil'
                         ? 'border-blue-400 bg-blue-50'
                         : 'border-slate-100 hover:border-blue-200 hover:bg-slate-50'
-                      }`}
+                    }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${isActive ? 'bg-blue-200' : 'bg-slate-100'}`}>
-                        <Car size={15} className={isActive ? 'text-blue-600' : 'text-slate-500'} />
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                        selectedVehicleType === 'Mobil' ? 'bg-blue-200' : 'bg-slate-100'
+                      }`}>
+                        <Car size={15} className={selectedVehicleType === 'Mobil' ? 'text-blue-600' : 'text-slate-500'} />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-slate-800">{vehicle.plat_nomor}</p>
-                        <p className="text-xs text-slate-400">{vehicle.jenis_kendaraan}</p>
+                        <p className="text-sm font-semibold text-slate-800">Mobil</p>
+                        <p className="text-xs text-slate-400">Rp {selectedArea.tarifs.mobil?.tarif_per_jam}/jam</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {isActive && <CheckCircle2 size={16} className="text-blue-500" />}
+                      {selectedVehicleType === 'Mobil' && <CheckCircle2 size={16} className="text-blue-500" />}
                       <input
-                        type="radio" name="vehicle" value={vehicle.id}
-                        checked={isActive}
-                        onChange={() => setSelectedVehicle(vehicle.id)}
+                        type="radio" name="vehicleType" value="Mobil"
+                        checked={selectedVehicleType === 'Mobil'}
+                        onChange={() => setSelectedVehicleType('Mobil')}
                         className="sr-only"
                       />
                     </div>
                   </label>
-                );
-              })}
+
+                  <label
+                    className={`flex items-center justify-between p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+                      selectedVehicleType === 'Motor'
+                        ? 'border-blue-400 bg-blue-50'
+                        : 'border-slate-100 hover:border-blue-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                        selectedVehicleType === 'Motor' ? 'bg-blue-200' : 'bg-slate-100'
+                      }`}>
+                        <Car size={15} className={selectedVehicleType === 'Motor' ? 'text-blue-600' : 'text-slate-500'} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">Motor</p>
+                        <p className="text-xs text-slate-400">Rp {selectedArea.tarifs.motor?.tarif_per_jam}/jam</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {selectedVehicleType === 'Motor' && <CheckCircle2 size={16} className="text-blue-500" />}
+                      <input
+                        type="radio" name="vehicleType" value="Motor"
+                        checked={selectedVehicleType === 'Motor'}
+                        onChange={() => setSelectedVehicleType('Motor')}
+                        className="sr-only"
+                      />
+                    </div>
+                  </label>
+                </>
+              )}
+              {!selectedArea && (
+                <div className="text-center py-8 text-slate-400 text-sm">
+                  Silakan pilih area parkir terlebih dahulu
+                </div>
+              )}
             </div>
           </div>
 
@@ -240,11 +271,11 @@ export default function NewBookingPage() {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 shadow-lg px-5 py-4">
         <div className="max-w-3xl mx-auto">
           {/* Summary pill */}
-          {(selectedArea || selectedVehicle) && (
+          {(selectedArea || selectedVehicleType) && (
             <div className="flex items-center gap-3 mb-3 px-4 py-2.5 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-500">
               <span className="font-medium text-slate-700 truncate">{selectedArea?.nama_area ?? '—'}</span>
               <span className="text-slate-300">·</span>
-              <span className="truncate">{vehicles.find(v => v.id === selectedVehicle)?.plat_nomor ?? '—'}</span>
+              <span className="truncate">{selectedVehicleType ?? '—'}</span>
             </div>
           )}
           <button
@@ -255,7 +286,7 @@ export default function NewBookingPage() {
               const form = document.querySelector('form');
               form?.requestSubmit();
             }}
-            disabled={isLoading || !selectedArea || !selectedVehicle}
+            disabled={isLoading || !selectedArea || !selectedVehicleType}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-blue-400 to-blue-600 text-white text-sm font-semibold shadow-md shadow-blue-200 hover:opacity-90 active:scale-[0.98] transition-all disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed"
           >
             {isLoading

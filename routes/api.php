@@ -23,6 +23,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::post('/booking/exit', [BookingController::class, 'exit']);
     Route::get('/booking/sessions', [BookingController::class, 'userSessions']);
     Route::get('/booking/active', [BookingController::class, 'activeSession']);
+    Route::get('/booking/rates', [BookingController::class, 'getCurrentRates']);
     Route::get('/vehicles', [BookingController::class, 'vehicles']);
 
     // Parking session routes

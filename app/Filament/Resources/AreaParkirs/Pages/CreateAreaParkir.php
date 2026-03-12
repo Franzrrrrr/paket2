@@ -9,11 +9,22 @@ class CreateAreaParkir extends CreateRecord
 {
     protected static string $resource = AreaPakirResource::class;
 
-    function afterCreate(): void
+    protected function afterCreate(): void
     {
+
         \App\Models\LogAktivitas::create([
-            'user_id' => auth()->id(),
-            'aktivitas' => 'Membuat area parkir baru',
+            'user_id' => filament()->auth()->id(),
+            'aktivitas' => 'Membuat area parkir baru dengan nama ' . $this->record->nama_area,
         ]);
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
+    protected function getCreatedNotificationMessage(): ?string
+    {
+        return 'Area Parkir telah dibuat!';
     }
 }

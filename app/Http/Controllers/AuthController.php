@@ -10,6 +10,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->only('email', 'password');
+        \Log::info($credentials);
 
         if (!Auth::attempt($credentials)) {
             return response()->json([
@@ -20,6 +21,7 @@ class AuthController extends Controller
         $user = Auth::user();
 
         $token = $user->createToken('authToken')->plainTextToken;
+        \Log::info($token);
 
         return response()->json([
             'token' => $token,

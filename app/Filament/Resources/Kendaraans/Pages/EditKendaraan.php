@@ -24,4 +24,14 @@ class EditKendaraan extends EditRecord
             'aktivitas' => 'Mengedit kendaraan dengan nomor ' . $this->record->nomor_kendaraan,
         ]);
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
+    protected function getSavedNotificationMessage(): ?string
+    {
+        return 'Kendaraan telah di ubah!';
+    }
 }

@@ -24,4 +24,14 @@ class EditTarif extends EditRecord
             'aktivitas' => 'Mengedit tarif dengan nama ' . $this->record->name,
         ]);
     }
+
+    protected function getSavedNotificationMessage(): ?string
+    {
+        return 'Tarif telah di ubah!';
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

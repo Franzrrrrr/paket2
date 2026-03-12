@@ -30,4 +30,9 @@ class AreaParkir extends Model
     {
         return $this->hasMany(Transaksi::class, 'area_id');
     }
+
+    public function tarifs()
+    {
+        return $this->belongsToMany(Tarif::class, 'area_parkir_tarif', 'area_parkir_id', 'tarif_id');
+    }
 }

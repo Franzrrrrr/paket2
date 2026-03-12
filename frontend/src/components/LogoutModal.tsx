@@ -23,7 +23,7 @@ export default function LogoutModal({ isOpen, onClose, onConfirm }: LogoutModalP
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="fixed inset-0 z-1000 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-xl p-6 max-w-md mx-4 shadow-xl">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
@@ -34,7 +34,7 @@ export default function LogoutModal({ isOpen, onClose, onConfirm }: LogoutModalP
             <p className="text-sm text-gray-600">Apakah Anda yakin ingin keluar?</p>
           </div>
         </div>
-        
+
         <div className="flex gap-3">
           <Button
             variant="outline"

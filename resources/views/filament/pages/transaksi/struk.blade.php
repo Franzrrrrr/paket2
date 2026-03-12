@@ -224,10 +224,6 @@
             <span class="value">{{ ucfirst($transaksi->kendaraan->jenis_kendaraan ?? '-') }}</span>
         </div>
         <div class="row">
-            <span class="label">Warna</span>
-            <span class="value">{{ $transaksi->kendaraan->warna ?? '-' }}</span>
-        </div>
-        <div class="row">
             <span class="label">Pemilik</span>
             <span class="value">{{ $transaksi->kendaraan->pemilik ?? '-' }}</span>
         </div>

@@ -42,6 +42,10 @@ export interface ParkingArea {
   sisa: number;
   occupancy_rate: number;
   status: string;
+  tarifs?: {
+    mobil?: TarifRates;
+    motor?: TarifRates;
+  };
 }
 
 export interface Vehicle {
@@ -49,6 +53,15 @@ export interface Vehicle {
   plat_nomor: string;
   jenis_kendaraan: string;
   user_id: number;
+  status?: string;
+}
+
+export interface TarifRates {
+  tarif_per_menit: number;
+  tarif_per_jam: number;
+  tarif_akumulasi_menit?: number;
+  tarif_akumulasi_jam?: number;
+  denda_inap_per_hari: number;
 }
 
 export interface ParkingSession {
@@ -77,7 +90,8 @@ export interface LoginResponse {
 }
 
 export interface BookingRequest {
-  vehicle_id: number;
+  vehicle_type?: string;
+  vehicle_id?: number;
   parking_area_id: number;
   estimated_duration?: number;
 }
@@ -164,10 +178,19 @@ export const parkingSessionsAPI = {
   },
 };
 
+export interface RatesResponse {
+  mobil: TarifRates | null;
+  motor: TarifRates | null;
+}
+
 export const vehicleAPI = {
   getAll: async (): Promise<any> => {
     const response = await api.get('/vehicles');
     console.log('Vehicle API Response:', response.data);
     return response.data;
+  },
+  getRates: async (areaId: number): Promise<RatesResponse> => {
+    const response = await api.get(`/booking/rates?area_id=${areaId}`);
+    return response.data.data;
   },
 };

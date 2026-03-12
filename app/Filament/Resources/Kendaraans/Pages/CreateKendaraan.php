@@ -16,4 +16,14 @@ class CreateKendaraan extends CreateRecord
                 'aktivitas' => 'Membuat kendaraan baru dengan nomor ' . $this->record->nomor_kendaraan,
             ]);
         }
+
+        protected function getRedirectUrl(): string
+        {
+            return $this->getResource()::getUrl('index');
+        }
+
+        protected function getCreatedNotificationMessage(): ?string
+        {
+            return 'Kendaraan telah dibuat!';
+        }
 }

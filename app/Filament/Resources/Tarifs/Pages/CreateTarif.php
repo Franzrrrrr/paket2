@@ -16,4 +16,14 @@ class CreateTarif extends CreateRecord
             'aktivitas' => 'Membuat tarif baru dengan nama ' . $this->record->name,
         ]);
     }
+
+    protected function getCreatedNotificationMessage(): ?string
+    {
+        return 'Tarif telah dibuat!';
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

@@ -3,186 +3,191 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { bookingAPI, ParkingSession } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Clock, MapPin, Car, ArrowLeft } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
+import { CheckCircle2, Clock, MapPin, Car, ArrowLeft, ChevronRight, TicketCheck } from 'lucide-react';
 
 export default function BookingSuccessPage() {
-  const router = useRouter();
+  const router       = useRouter();
   const searchParams = useSearchParams();
-  const ticketCode = searchParams.get('ticket');
-  const [session, setSession] = useState<ParkingSession | null>(null);
+  const ticketCode   = searchParams.get('ticket');
+  const [session, setSession]     = useState<ParkingSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!ticketCode) {
-      router.push('/dashboard');
-      return;
-    }
-
+    if (!ticketCode) { router.push('/dashboard'); return; }
     fetchSession();
   }, [ticketCode]);
 
   const fetchSession = async () => {
     try {
-      const sessionData = await bookingAPI.getActiveSession();
-      setSession(sessionData);
-    } catch (error) {
-      console.error('Failed to fetch session:', error);
+      const data = await bookingAPI.getActiveSession();
+      // handle array atau single
+      setSession(Array.isArray(data) ? data[0] : data);
+    } catch (err) {
+      console.error('Failed to fetch session:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ── Loading ──
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="w-10 h-10 rounded-full border-4 border-blue-200 border-t-blue-500 animate-spin" />
       </div>
     );
   }
 
+  // ── Not found ──
   if (!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Data tidak ditemukan</h1>
-          <Button onClick={() => router.push('/dashboard')}>
-            Kembali ke Dashboard
-          </Button>
-        </div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4 p-6">
+        <p className="text-slate-600 font-medium">Data sesi tidak ditemukan</p>
+        <button
+          onClick={() => router.push('/dashboard')}
+          className="px-5 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors"
+        >
+          Kembali ke Dashboard
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
+
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-16">
-            <Button
-              variant="ghost"
-              onClick={() => router.push('/dashboard')}
-              className="mr-4"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Kembali
-            </Button>
-            <h1 className="text-xl font-bold text-gray-900">Booking Berhasil</h1>
-          </div>
+      <header className="bg-white border-b border-slate-100 sticky top-0 z-20 shadow-sm">
+        <div className="max-w-2xl mx-auto px-5 h-14 flex items-center gap-3">
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="p-2 rounded-xl hover:bg-slate-100 text-slate-500 transition-colors"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <h1 className="text-base font-bold text-slate-900">Booking Berhasil</h1>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Success Message */}
-        <div className="text-center mb-8">
-          <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-green-100 mb-4">
-            <CheckCircle className="h-10 w-10 text-green-600" />
+      <main className="max-w-2xl mx-auto px-5 py-7 space-y-5 pb-32">
+
+        {/* ── Success Hero ── */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-8 flex flex-col items-center text-center">
+          <div className="w-16 h-16 rounded-2xl bg-green-100 flex items-center justify-center mb-4">
+            <CheckCircle2 size={34} className="text-green-500" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h2 className="text-lg font-extrabold text-slate-900 tracking-tight mb-1">
             Booking Parkir Berhasil!
           </h2>
-          <p className="text-gray-600">
+          <p className="text-sm text-slate-400">
             Kendaraan Anda telah terdaftar di area parkir yang dipilih
           </p>
+
+          {/* Ticket code pill */}
+          <div className="mt-5 flex items-center gap-2.5 px-5 py-3 bg-blue-50 border border-blue-200 rounded-xl">
+            <TicketCheck size={18} className="text-blue-500 shrink-0" />
+            <div className="text-left">
+              <p className="text-xs text-blue-400 font-medium">Kode Tiket</p>
+              <p className="text-base font-extrabold text-blue-700 tracking-widest font-mono">
+                {session.ticket_code}
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Ticket Details */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Car className="h-5 w-5 mr-2" />
-              Detail Tiket Parkir
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center py-3 border-b">
-                <span className="font-medium">Kode Tiket</span>
-                <span className="font-mono font-bold text-lg text-blue-600">
-                  {session.ticket_code}
-                </span>
+        {/* ── Detail Tiket ── */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-100">
+            <Car size={15} className="text-blue-500" />
+            <span className="text-sm font-bold text-slate-800">Detail Tiket Parkir</span>
+          </div>
+          <div className="divide-y divide-slate-50">
+            {[
+              { label: 'Area Parkir',  value: session.parking_area.nama_area },
+              { label: 'Kendaraan',    value: `${session.vehicle.plat_nomor} · ${session.vehicle.jenis_kendaraan}` },
+              { label: 'Waktu Masuk', value: formatDateTime(session.entry_time) },
+              { label: 'Status',       value: null },
+            ].map((row, i) => (
+              <div key={i} className="flex items-center justify-between px-5 py-3.5">
+                <span className="text-sm text-slate-400 font-medium">{row.label}</span>
+                {row.value !== null
+                  ? <span className="text-sm font-semibold text-slate-700">{row.value}</span>
+                  : (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-green-50 text-green-700 text-xs font-semibold border border-green-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                      Aktif
+                    </span>
+                  )
+                }
               </div>
-              
-              <div className="flex justify-between items-center py-3 border-b">
-                <span className="font-medium">Area Parkir</span>
-                <span>{session.parking_area.nama_area}</span>
-              </div>
-              
-              <div className="flex justify-between items-center py-3 border-b">
-                <span className="font-medium">Kendaraan</span>
-                <span>{session.vehicle.plat_nomor} ({session.vehicle.jenis_kendaraan})</span>
-              </div>
-              
-              <div className="flex justify-between items-center py-3 border-b">
-                <span className="font-medium">Waktu Masuk</span>
-                <span>{formatDateTime(session.entry_time)}</span>
-              </div>
-              
-              <div className="flex justify-between items-center py-3">
-                <span className="font-medium">Status</span>
-                <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">
-                  Aktif
-                </span>
-              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Lokasi ── */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-100">
+            <MapPin size={15} className="text-blue-500" />
+            <span className="text-sm font-bold text-slate-800">Lokasi Parkir</span>
+          </div>
+          <div className="px-5 py-4 space-y-1.5">
+            <p className="text-sm font-semibold text-slate-800">{session.parking_area.nama_area}</p>
+            <p className="text-xs text-slate-400">{session.parking_area.alamat}</p>
+            <div className="flex items-center gap-4 pt-1">
+              <span className="flex items-center gap-1 text-xs text-slate-500">
+                <Car size={11} className="text-slate-400" />
+                {session.parking_area.terisi}/{session.parking_area.kapasitas} terisi
+              </span>
+              <span className="flex items-center gap-1 text-xs text-green-600 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                {session.parking_area.sisa} tersedia
+              </span>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Parking Location */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <MapPin className="h-5 w-5 mr-2" />
-              Lokasi Parkir
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <h3 className="font-semibold">{session.parking_area.nama_area}</h3>
-              <p className="text-gray-600">{session.parking_area.alamat}</p>
-              <div className="flex space-x-4 text-sm text-gray-500">
-                <span>Kapasitas: {session.parking_area.terisi}/{session.parking_area.kapasitas}</span>
-                <span>Tersedia: {session.parking_area.sisa}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* ── Catatan penting ── */}
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Clock size={14} className="text-amber-600" />
+            <span className="text-sm font-bold text-amber-800">Informasi Penting</span>
+          </div>
+          <ul className="space-y-1.5 text-xs text-amber-700">
+            {[
+              'Simpan kode tiket untuk proses keluar parkir',
+              'Biaya parkir: Rp 2.000 per jam (minimum 1 jam)',
+              'Pastikan kendaraan diparkir di lokasi yang benar',
+              'Hubungi petugas jika ada kendala',
+            ].map((note, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                {note}
+              </li>
+            ))}
+          </ul>
+        </div>
 
-        {/* Important Notes */}
-        <Card className="mb-6 border-yellow-200 bg-yellow-50">
-          <CardContent className="p-6">
-            <h3 className="font-semibold text-yellow-900 mb-2 flex items-center">
-              <Clock className="h-5 w-5 mr-2" />
-              Penting
-            </h3>
-            <ul className="text-sm text-yellow-800 space-y-1">
-              <li>• Simpan kode tiket dengan aman untuk proses keluar parkir</li>
-              <li>• Biaya parkir: Rp 2.000 per jam (minimum 1 jam)</li>
-              <li>• Pastikan kendaraan diparkir di lokasi yang benar</li>
-              <li>• Hubungi petugas jika ada kendala</li>
-            </ul>
-          </CardContent>
-        </Card>
+      </main>
 
-        {/* Actions */}
-        <div className="flex space-x-4">
-          <Button
+      {/* ── CTA sticky bottom ── */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 shadow-lg px-5 py-4">
+        <div className="max-w-2xl mx-auto flex gap-3">
+          <button
             onClick={() => router.push('/dashboard')}
-            className="flex-1"
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-blue-400 to-blue-600 text-white text-sm font-semibold shadow-md shadow-blue-200 hover:opacity-90 transition-all"
           >
-            Kembali ke Dashboard
-          </Button>
-          <Button
-            variant="outline"
+            Dashboard <ChevronRight size={15} />
+          </button>
+          <button
             onClick={() => router.push('/booking/exit')}
+            className="flex items-center justify-center gap-1.5 px-5 py-3 rounded-xl border-2 border-slate-200 text-slate-600 text-sm font-semibold hover:border-red-300 hover:text-red-500 hover:bg-red-50 transition-all"
           >
             Keluar Parkir
-          </Button>
+          </button>
         </div>
-      </main>
+      </div>
+
     </div>
   );
 }

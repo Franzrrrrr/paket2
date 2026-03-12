@@ -62,12 +62,6 @@
                         </span>
                     </div>
                     <div class="flex justify-between text-sm">
-                        <span class="text-gray-500 dark:text-gray-400">Warna</span>
-                        <span class="font-medium text-gray-950 dark:text-white">
-                            {{ $record->kendaraan->warna ?? '-' }}
-                        </span>
-                    </div>
-                    <div class="flex justify-between text-sm">
                         <span class="text-gray-500 dark:text-gray-400">Pemilik</span>
                         <span class="font-medium text-gray-950 dark:text-white">
                             {{ $record->kendaraan->pemilik ?? '-' }}

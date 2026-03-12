@@ -7,6 +7,7 @@ use App\Models\ParkingSession;
 use App\Models\Kendaraan;
 use App\Models\Transaksi;
 use App\Models\LogAktivitas;
+use App\Services\TarifCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
@@ -22,26 +23,46 @@ class BookingController extends Controller
     public function book(Request $request): JsonResponse
     {
         $request->validate([
-            'vehicle_id' => 'required|exists:kendaraans,id',
-            'parking_area_id' => 'required|exists:area_parkirs,id',
+            'vehicle_type' => 'required_without:vehicle_id|string|in:Mobil,Motor',
+            'vehicle_id' => 'required_without:vehicle_type|integer|exists:kendaraans,id',
+            'parking_area_id' => 'required|integer|exists:area_parkirs,id',
             'estimated_duration' => 'nullable|integer|min:1'
         ]);
 
         $user = $request->user();
-        $vehicle = Kendaraan::findOrFail($request->vehicle_id);
         $parkingArea = AreaParkir::findOrFail($request->parking_area_id);
 
-        // Check if vehicle belongs to user
-        if ($vehicle->user_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized: Vehicle does not belong to user'], 403);
-        }
-
-        // Check if parking area has available space
         if ($parkingArea->terisi >= $parkingArea->kapasitas) {
-            return response()->json(['message' => 'Parking area is full'], 422);
+            return response()->json(['message' => 'Area parkir sudah penuh'], 400);
         }
 
-        // Check if vehicle already has active session
+        $vehicle = null;
+        if ($request->has('vehicle_id')) {
+            $vehicle = Kendaraan::where('id', $request->vehicle_id)
+                ->where('user_id', $user->id)
+                ->first();
+        } elseif ($request->has('vehicle_type')) {
+            $vehicle = Kendaraan::create([
+                'plat_nomor' => 'TEMP-' . strtoupper(uniqid()),
+                'jenis_kendaraan' => $request->vehicle_type,
+                'user_id' => $user->id,
+            ]);
+        }
+
+        $tarif = $parkingArea->tarifs()
+            ->where('jenis_kendaraan', $vehicle->jenis_kendaraan)
+            ->first();
+
+        if (!$tarif) {
+            return response()->json([
+                'message' => 'Tarif tidak ditemukan untuk jenis kendaraan ini'
+            ], 400);
+        }
+
+        if (!$vehicle) {
+            return response()->json(['message' => 'Kendaraan tidak valid'], 400);
+        }
+
         $activeSession = ParkingSession::where('vehicle_id', $vehicle->id)
             ->where('status', 'active')
             ->first();
@@ -50,12 +71,10 @@ class BookingController extends Controller
             return response()->json(['message' => 'Vehicle already has active parking session'], 422);
         }
 
-        // Generate unique ticket code
         do {
-            $ticketCode = 'PK-' . strtoupper(Str::random(8));
+            $ticketCode = 'PK-' . date('Ymd') . '-' . strtoupper(Str::random(6));
         } while (ParkingSession::where('ticket_code', $ticketCode)->exists());
 
-        // Create parking session
         $parkingSession = ParkingSession::create([
             'ticket_code' => $ticketCode,
             'vehicle_id' => $vehicle->id,
@@ -64,23 +83,21 @@ class BookingController extends Controller
             'status' => 'active'
         ]);
 
-        // Update parking area occupancy
         $parkingArea->increment('terisi');
 
-        // Create transaction record
         $transaksi = Transaksi::create([
-            'id_user' => $user->id,
-            'id_kendaraan' => $vehicle->id,
-            'id_area' => $parkingArea->id,
+            'user_id' => $user->id,
+            'kendaraan_id' => $vehicle->id,
+            'area_id' => $parkingArea->id,
+            'tarif_id' => $tarif->id,
             'waktu_masuk' => now(),
             'status' => 'masuk',
-            'ticket_code' => $ticketCode
+            'ticket_code' => $ticketCode,
         ]);
 
-        // Log activity
         LogAktivitas::create([
             'user_id' => $user->id,
-            'aktivitas' => "User booked parking at {$parkingArea->nama_area} with ticket {$ticketCode}"
+            'aktivitas' => "User booked parking at {$parkingArea->nama_area} with ticket {$ticketCode} ({$vehicle->jenis_kendaraan})"
         ]);
 
         return response()->json([
@@ -100,49 +117,59 @@ class BookingController extends Controller
         ]);
 
         $user = $request->user();
-        $parkingSession = ParkingSession::where('ticket_code', $request->ticket_code)
-            ->with(['vehicle', 'parkingArea'])
-            ->firstOrFail();
+        $ticketCode = $request->ticket_code;
 
-        // Verify ownership or admin role
-        if ($parkingSession->vehicle->user_id !== $user->id && !$user->hasRole('admin')) {
+
+        $parkingSession = ParkingSession::where('ticket_code', $ticketCode)
+            ->where('status', 'active')
+            ->first();
+
+
+        if (!$parkingSession) {
+            return response()->json(['message' => 'Ticket tidak valid atau sudah keluar'], 404);
+        }
+
+        if ($parkingSession->vehicle->user_id !== $user->id && !$user->hasRole(['admin', 'owner'])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        if ($parkingSession->status !== 'active') {
-            return response()->json(['message' => 'Parking session is not active'], 422);
+        $exitTime = now();
+        $entryTime = $parkingSession->entry_time;
+        $duration = $entryTime->diffInMinutes($exitTime);
+
+        try {
+            $feeCalculation = TarifCalculator::calculateFee(
+                $parkingSession->vehicle->jenis_kendaraan,
+                $entryTime,
+                $exitTime,
+                $parkingSession->parking_area_id
+            );
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
         }
 
-        $exitTime = now();
-        $duration = $exitTime->diffInMinutes($parkingSession->entry_time);
-
-        // Update parking session
         $parkingSession->update([
             'exit_time' => $exitTime,
             'duration' => $duration,
             'status' => 'completed'
         ]);
 
-        // Update parking area occupancy
+        \Log::info('Parking Session updated: ' . json_encode($parkingSession));
+
         $parkingSession->parkingArea->decrement('terisi');
 
-        // Update transaction
-        $transaksi = Transaksi::where('ticket_code', $request->ticket_code)->first();
+        $transaksi = Transaksi::where('ticket_code', $ticketCode)->first();
         if ($transaksi) {
             $transaksi->update([
                 'waktu_keluar' => $exitTime,
-                'status' => 'keluar'
+                'status' => 'keluar',
+                'total_harga' => $feeCalculation['total_fee']
             ]);
         }
 
-        // Calculate price (example: Rp 2000 per hour, minimum 1 hour)
-        $hours = ceil($duration / 60);
-        $totalPrice = $hours * 2000;
-
-        // Log activity
         LogAktivitas::create([
             'user_id' => $user->id,
-            'aktivitas' => "Vehicle exited from {$parkingSession->parkingArea->nama_area} with ticket {$request->ticket_code}. Duration: {$duration} minutes, Price: Rp {$totalPrice}"
+            'aktivitas' => "Vehicle exited from {$parkingSession->parkingArea->nama_area} with ticket {$ticketCode}. Duration: {$duration} minutes, Total: Rp {$feeCalculation['total_fee']}"
         ]);
 
         return response()->json([
@@ -150,7 +177,9 @@ class BookingController extends Controller
             'data' => [
                 'ticket_code' => $parkingSession->ticket_code,
                 'duration_minutes' => $duration,
-                'total_price' => $totalPrice,
+                'duration_hours' => $feeCalculation['duration_hours'],
+                'fee_breakdown' => $feeCalculation,
+                'total_price' => $feeCalculation['total_fee'],
                 'exit_time' => $exitTime
             ]
         ]);
@@ -188,9 +217,37 @@ class BookingController extends Controller
         return response()->json($session);
     }
 
+    public function getCurrentRates(Request $request): JsonResponse
+    {
+        $request->validate([
+            'area_id' => 'required|integer|exists:area_parkirs,id'
+        ]);
+
+        $areaId = $request->area_id;
+        $rates = TarifCalculator::getAreaRates($areaId);
+
+        return response()->json([
+            'data' => [
+                'mobil' => $rates['mobil'] ? [
+                    'tarif_per_menit' => $rates['mobil']->tarif_per_menit,
+                    'tarif_per_jam' => $rates['mobil']->tarif_per_jam,
+                    'tarif_akumulasi_menit' => $rates['mobil']->tarif_akumulasi_menit,
+                    'tarif_akumulasi_jam' => $rates['mobil']->tarif_akumulasi_jam,
+                    'denda_inap_per_hari' => $rates['mobil']->denda_inap_per_hari,
+                ] : null,
+                'motor' => $rates['motor'] ? [
+                    'tarif_per_menit' => $rates['motor']->tarif_per_menit,
+                    'tarif_per_jam' => $rates['motor']->tarif_per_jam,
+                    'tarif_akumulasi_menit' => $rates['motor']->tarif_akumulasi_menit,
+                    'tarif_akumulasi_jam' => $rates['motor']->tarif_akumulasi_jam,
+                    'denda_inap_per_hari' => $rates['motor']->denda_inap_per_hari,
+                ] : null,
+            ]
+        ]);
+    }
+
     public function vehicles(Request $request): JsonResponse
     {
-        \Log::info('Fetching vehicles for user', ['user_id' => $request->user()->id]);
         $user = $request->user();
 
         $vehicles = Kendaraan::where('user_id', $user->id)->get();

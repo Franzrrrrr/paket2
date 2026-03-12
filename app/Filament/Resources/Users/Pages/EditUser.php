@@ -25,4 +25,14 @@ class EditUser extends EditRecord
             'aktivitas' => 'Mengedit pengguna dengan nama ' . $this->record->name,
         ]);
     }
+
+    protected function getSavedNotificationMessage(): ?string
+    {
+        return 'Pengguna telah di ubah!';
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

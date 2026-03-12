@@ -16,4 +16,14 @@ class CreateUser extends CreateRecord
             'aktivitas' => 'Membuat pengguna baru dengan nama ' . $this->record->name,
         ]);
     }
+
+    protected function getCreatedNotificationMessage(): ?string
+    {
+        return 'Pengguna telah dibuat!';
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

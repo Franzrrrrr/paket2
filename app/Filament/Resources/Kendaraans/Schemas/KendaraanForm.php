@@ -22,8 +22,6 @@ class KendaraanForm
                     ->options(['motor' => 'Motor', 'mobil' => 'Mobil'])
                     ->default('motor')
                     ->required(),
-                TextInput::make('warna')
-                    ->required(),
                 TextInput::make('pemilik')
                     ->required(),
             ]);

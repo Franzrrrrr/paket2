@@ -11,6 +11,11 @@ class ListAreaParkirs extends ListRecords
     protected static string $resource = AreaPakirResource::class;
     protected ?string $heading = 'Area Parkir';
 
+    public function mount(): void
+    {
+        parent::mount();
+    }
+
     protected function getHeaderActions(): array
     {
         return [

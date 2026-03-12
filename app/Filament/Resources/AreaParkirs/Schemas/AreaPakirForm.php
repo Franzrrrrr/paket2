@@ -4,8 +4,9 @@ namespace App\Filament\Resources\AreaParkirs\Schemas;
 
 use EduardoRibeiroDev\FilamentLeaflet\Enums\TileLayer;
 use EduardoRibeiroDev\FilamentLeaflet\Fields\MapPicker;
-use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section as ComponentsSection;
 use Filament\Schemas\Schema;
 
@@ -37,6 +38,23 @@ class AreaPakirForm
                 ComponentsSection::make('Lokasi Area Parkir')
                     ->collapsible()
                     ->schema([
+                        Select::make('tarifs')
+                            ->label('Tarif Area Parkir')
+                            ->multiple()
+                            ->relationship(
+                                name: 'tarifs',
+                                titleAttribute: 'jenis_kendaraan'
+                            )
+                            ->searchable()
+                            ->preload()
+                            ->columnSpanFull()
+                            ->getOptionLabelFromRecordUsing(function ($record) {
+                                return strtoupper($record->jenis_kendaraan)
+                                    . " | Rp " . number_format($record->tarif_per_jam)
+                                    . "/jam | Rp " . number_format($record->tarif_per_menit)
+                                    . "/menit";
+                            })
+                            ->helperText('Pilih tarif yang berlaku untuk area parkir ini'),
                         Textarea::make('alamat')
                             ->label('Alamat Lengkap')
                             ->rows(2)
