@@ -30,7 +30,7 @@ class AreaParkirWidget extends MapWidget
 
                 $color = match (true) {
                     $rate >= 100 => '#ef4444',
-                    $rate >= 80  => '#facc15',
+                    $rate >= 80  => '#facc15',  
                     default      => '#22c55e',
                 };
 

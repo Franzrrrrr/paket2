@@ -8,8 +8,12 @@ use Filament\Widgets\ChartWidget;
 
 class RevenueTrendChart extends ChartWidget
 {
-    protected  ?string $heading = 'Tren Pendapatan 7 Hari Terakhir';
-    protected static ?int $sort = 2;
+    protected ?string $heading = 'Tren Pendapatan (7 Hari)';
+    protected static ?int $sort = 9;
+
+    protected static ?array $pages = [
+        'dashboard',
+    ];
 
     protected function getType(): string
     {

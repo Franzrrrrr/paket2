@@ -13,7 +13,11 @@ class ParkedVehiclesTable extends BaseWidget
     protected static ?string $heading = 'Kendaraan Sedang Parkir';
     protected static ?int $sort = 6;
 
-    protected  ?string $pollingInterval = '15s';
+    protected ?string $pollingInterval = '15s';
+
+    protected static ?array $pages = [
+        'dashboard',
+    ];
 
     public function table(Table $table): Table
     {

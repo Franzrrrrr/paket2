@@ -12,7 +12,11 @@ class RecentActivityLogs extends BaseWidget
     protected static ?string $heading = 'Log Aktivitas Terbaru';
     protected static ?int $sort = 7;
 
-    protected  ?string $pollingInterval = '60s';
+    protected ?string $pollingInterval = '60s';
+
+    protected static ?array $pages = [
+        'dashboard',
+    ];
 
     public function table(Table $table): Table
     {

@@ -7,8 +7,12 @@ use Filament\Widgets\ChartWidget;
 
 class VehicleTypeDistributionChart extends ChartWidget
 {
-    protected  ?string $heading = 'Distribusi Jenis Kendaraan';
-    protected static ?int $sort = 4;
+    protected ?string $heading = 'Distribusi Jenis Kendaraan';
+    protected static ?int $sort = 11;
+
+    protected static ?array $pages = [
+        'dashboard',
+    ];
 
     protected function getType(): string
     {

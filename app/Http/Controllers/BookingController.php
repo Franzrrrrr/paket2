@@ -7,6 +7,7 @@ use App\Models\ParkingSession;
 use App\Models\Kendaraan;
 use App\Models\Transaksi;
 use App\Models\LogAktivitas;
+use App\Models\CustomNotification;
 use App\Services\TarifCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +23,21 @@ class BookingController extends Controller
 
     public function book(Request $request): JsonResponse
     {
+        $startTime = microtime(true);
+
+        LogAktivitas::logBooking(
+            "Pencobaan booking dimulai",
+            $request->user()->id,
+            [
+                'vehicle_type' => $request->vehicle_type,
+                'vehicle_id' => $request->vehicle_id,
+                'parking_area_id' => $request->parking_area_id,
+                'estimated_duration' => $request->estimated_duration,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]
+        );
+
         $request->validate([
             'vehicle_type' => 'required_without:vehicle_id|string|in:Mobil,Motor',
             'vehicle_id' => 'required_without:vehicle_type|integer|exists:kendaraans,id',
@@ -33,6 +49,29 @@ class BookingController extends Controller
         $parkingArea = AreaParkir::findOrFail($request->parking_area_id);
 
         if ($parkingArea->terisi >= $parkingArea->kapasitas) {
+            LogAktivitas::logBooking(
+                "Booking gagal - area penuh",
+                $user->id,
+                [
+                    'parking_area_id' => $parkingArea->id,
+                    'parking_area_name' => $parkingArea->nama_area,
+                    'capacity' => $parkingArea->kapasitas,
+                    'occupied' => $parkingArea->terisi,
+                ],
+                LogAktivitas::LEVEL_WARNING
+            );
+
+            CustomNotification::systemAlert(
+                'Area Parkir Penuh',
+                "Area {$parkingArea->nama_area} sudah penuh ({$parkingArea->terisi}/{$parkingArea->kapasitas})",
+                [
+                    'parking_area_id' => $parkingArea->id,
+                    'capacity' => $parkingArea->kapasitas,
+                    'occupied' => $parkingArea->terisi,
+                ],
+                CustomNotification::PRIORITY_MEDIUM
+            );
+
             return response()->json(['message' => 'Area parkir sudah penuh'], 400);
         }
 
@@ -68,7 +107,7 @@ class BookingController extends Controller
             ->first();
 
         if ($activeSession) {
-            return response()->json(['message' => 'Vehicle already has active parking session'], 422);
+            return response()->json(['message' => 'Kendaraan sudah memiliki sesi parkir aktif'], 422);
         }
 
         do {
@@ -95,13 +134,36 @@ class BookingController extends Controller
             'ticket_code' => $ticketCode,
         ]);
 
-        LogAktivitas::create([
-            'user_id' => $user->id,
-            'aktivitas' => "User booked parking at {$parkingArea->nama_area} with ticket {$ticketCode} ({$vehicle->jenis_kendaraan})"
-        ]);
+        $executionTime = microtime(true) - $startTime;
+
+        LogAktivitas::logBooking(
+            "Booking berhasil diselesaikan",
+            $user->id,
+            [
+                'ticket_code' => $ticketCode,
+                'parking_area_id' => $parkingArea->id,
+                'parking_area_name' => $parkingArea->nama_area,
+                'vehicle_type' => $vehicle->jenis_kendaraan,
+                'vehicle_id' => $vehicle->id,
+                'tarif_id' => $tarif->id,
+                'execution_time' => round($executionTime, 2),
+                'estimated_duration' => $request->estimated_duration,
+            ]
+        );
+
+        // Send notification for booking activity
+        CustomNotification::bookingActivity(
+            "Booking baru dibuat: {$ticketCode} di {$parkingArea->nama_area}",
+            [
+                'ticket_code' => $ticketCode,
+                'user_id' => $user->id,
+                'parking_area' => $parkingArea->nama_area,
+                'vehicle_type' => $vehicle->jenis_kendaraan,
+            ]
+        );
 
         return response()->json([
-            'message' => 'Booking successful',
+            'message' => 'Booking berhasil',
             'data' => [
                 'ticket_code' => $ticketCode,
                 'parking_session' => $parkingSession->load(['vehicle', 'parkingArea']),
@@ -154,7 +216,10 @@ class BookingController extends Controller
             'status' => 'completed'
         ]);
 
-        \Log::info('Parking Session updated: ' . json_encode($parkingSession));
+        LogAktivitas::logSystem('Sesi parkir diperbarui', [
+            'parking_session' => $parkingSession->toArray(),
+            'ticket_code' => $ticketCode,
+        ], LogAktivitas::LEVEL_DEBUG);
 
         $parkingSession->parkingArea->decrement('terisi');
 
@@ -163,17 +228,39 @@ class BookingController extends Controller
             $transaksi->update([
                 'waktu_keluar' => $exitTime,
                 'status' => 'keluar',
-                'total_harga' => $feeCalculation['total_fee']
+                'biaya_total' => $feeCalculation['total_fee']
             ]);
         }
 
-        LogAktivitas::create([
-            'user_id' => $user->id,
-            'aktivitas' => "Vehicle exited from {$parkingSession->parkingArea->nama_area} with ticket {$ticketCode}. Duration: {$duration} minutes, Total: Rp {$feeCalculation['total_fee']}"
-        ]);
+        LogAktivitas::logExit(
+            "Kendaraan keluar dari area parkir",
+            $user->id,
+            [
+                'ticket_code' => $ticketCode,
+                'parking_area' => $parkingSession->parkingArea->nama_area,
+                'duration_minutes' => $duration,
+                'biaya_total' => $feeCalculation['total_fee'],
+                'vehicle_type' => $parkingSession->vehicle->jenis_kendaraan,
+                'exit_time' => $exitTime->format('Y-m-d H:i:s'),
+            ]
+        );
+
+        // Send notification for high-value transactions
+        if ($feeCalculation['total_fee'] > 50000) {
+            CustomNotification::systemAlert(
+                'Transaksi dengan nilai tinggi',
+                "Transaksi parkir dengan nilai tinggi: Rp " . number_format($feeCalculation['total_fee'], 0, ',', '.') . " untuk tiket {$ticketCode}",
+                [
+                    'ticket_code' => $ticketCode,
+                    'amount' => $feeCalculation['total_fee'],
+                    'duration' => $duration,
+                ],
+                CustomNotification::PRIORITY_MEDIUM
+            );
+        }
 
         return response()->json([
-            'message' => 'Exit successful',
+            'message' => 'Keluar berhasil',
             'data' => [
                 'ticket_code' => $parkingSession->ticket_code,
                 'duration_minutes' => $duration,
@@ -211,7 +298,7 @@ class BookingController extends Controller
             ->first();
 
         if (!$session) {
-            return response()->json(['message' => 'No active parking session'], 404);
+            return response()->json(['message' => 'Tidak ada sesi parkir aktif'], 404);
         }
 
         return response()->json($session);

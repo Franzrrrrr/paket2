@@ -8,8 +8,12 @@ use Filament\Widgets\ChartWidget;
 
 class TrafficHourChart extends ChartWidget
 {
-    protected  ?string $heading = 'Trafik Kendaraan Per Jam (Hari Ini)';
-    protected static ?int $sort = 3;
+    protected ?string $heading = 'Lalu Lintas per Jam';
+    protected static ?int $sort = 10;
+
+    protected static ?array $pages = [
+        'dashboard',
+    ];
 
     protected function getType(): string
     {

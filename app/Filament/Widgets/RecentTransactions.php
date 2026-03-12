@@ -12,7 +12,11 @@ class RecentTransactions extends BaseWidget
     protected static ?string $heading = 'Transaksi Terbaru';
     protected static ?int $sort = 5;
 
-    protected  ?string $pollingInterval = '30s';
+    protected ?string $pollingInterval = '30s';
+
+    protected static ?array $pages = [
+        'dashboard',
+    ];
 
     public function table(Table $table): Table
     {

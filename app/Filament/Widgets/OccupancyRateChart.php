@@ -7,8 +7,12 @@ use Filament\Widgets\ChartWidget;
 
 class OccupancyRateChart extends ChartWidget
 {
-    protected  ?string $heading = 'Tingkat Okupansi Per Area';
+    protected ?string $heading = 'Tingkat Okupansi Per Area';
     protected static ?int $sort = 8;
+
+    protected static ?array $pages = [
+        'dashboard',
+    ];
 
     protected function getType(): string
     {
