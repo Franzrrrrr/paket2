@@ -3,8 +3,13 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
-        "dev": "vite"
+        "dev": "concurrently \"php artisan serve\" \"npm run dev:frontend\"",
+        "dev:frontend": "cd frontend && npm run dev",
+        "build": "cd frontend && npm run build",
+        "build:backend": "composer install --no-dev --optimize-autoloader",
+        "deploy": "npm run build:backend && npm run build",
+        "migrate": "php artisan migrate",
+        "seed": "php artisan db:seed"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.2.1",

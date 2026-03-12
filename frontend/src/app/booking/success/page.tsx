@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { bookingAPI, ParkingSession } from '@/lib/api';
 import { formatDateTime } from '@/lib/utils';
 import { CheckCircle2, Clock, MapPin, Car, ArrowLeft, ChevronRight, TicketCheck } from 'lucide-react';
 
-export default function BookingSuccessPage() {
+function BookingSuccessContent() {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const ticketCode   = searchParams.get('ticket');
@@ -189,5 +189,17 @@ export default function BookingSuccessPage() {
       </div>
 
     </div>
+  );
+}
+
+export default function BookingSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="w-10 h-10 rounded-full border-4 border-blue-200 border-t-blue-500 animate-spin" />
+      </div>
+    }>
+      <BookingSuccessContent />
+    </Suspense>
   );
 }
