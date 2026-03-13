@@ -19,8 +19,12 @@ return [
 
     'allowed_methods' => ['*'],
 
+    // 'allowed_origins' => [
+    //     'https://project-name.vercel.app'
+    // ],
+
     'allowed_origins' => [
-        'https://project-name.vercel.app'
+        '*'
     ],
 
     'allowed_origins_patterns' => [],
