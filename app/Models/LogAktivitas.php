@@ -98,6 +98,22 @@ class LogAktivitas extends Model
     }
 
     /**
+     * Log check-in activity
+     */
+    public static function logCheckIn(string $aktivitas, int $userId, array $context = []): self
+    {
+        return self::logActivity($aktivitas, $userId, self::TYPE_BOOKING, $context, self::LEVEL_INFO);
+    }
+
+    /**
+     * Log check-out activity
+     */
+    public static function logCheckOut(string $aktivitas, int $userId, array $context = []): self
+    {
+        return self::logActivity($aktivitas, $userId, self::TYPE_EXIT, $context, self::LEVEL_INFO);
+    }
+
+    /**
      * Log admin activity
      */
     public static function logAdmin(string $aktivitas, int $userId, array $context = []): self

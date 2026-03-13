@@ -88,6 +88,8 @@ class BookingController extends Controller
             ]);
         }
 
+        \Log::info('Vehicle: ' . $vehicle->toJson());
+
         $tarif = $parkingArea->tarifs()
             ->where('jenis_kendaraan', $vehicle->jenis_kendaraan)
             ->first();

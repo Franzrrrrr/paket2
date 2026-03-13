@@ -1,24 +1,29 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { parkingAreasAPI, bookingAPI, ParkingArea, Vehicle } from '@/lib/api';
-import { ArrowLeft, Car, MapPin, Clock, CheckCircle2, ChevronRight, Loader2 } from 'lucide-react';
+import { parkingAreasAPI, bookingReservationAPI, BookingReservationRequest, BookingResponse, ParkingArea, RatesResponse } from '@/lib/api';
+import { ArrowLeft, Car, MapPin, Clock, CheckCircle2, ChevronRight, Loader2, QrCode } from 'lucide-react';
 
-function NewBookingForm() {
+export default function NewBookingPage() {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const areaId       = searchParams.get('area');
 
   const [parkingAreas, setParkingAreas]         = useState<ParkingArea[]>([]);
-  const [vehicles, setVehicles]                 = useState<Vehicle[]>([]);
+  const [rates, setRates]                       = useState<RatesResponse | null>(null);
   const [selectedArea, setSelectedArea]         = useState<ParkingArea | null>(null);
-  const [selectedVehicle, setSelectedVehicle]   = useState<number | null>(null);
+  const [selectedVehicleType, setSelectedVehicleType] = useState<'Mobil' | 'Motor' | null>(null);
+  const [vehiclePlate, setVehiclePlate]         = useState('');
   const [estimatedDuration, setEstimatedDuration] = useState('');
   const [isLoading, setIsLoading]               = useState(false);
   const [error, setError]                       = useState('');
+  const [bookingSuccess, setBookingSuccess]       = useState<BookingResponse | null>(null);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   useEffect(() => {
     if (areaId && parkingAreas.length > 0) {
       const area = parkingAreas.find(a => a.id === parseInt(areaId));
@@ -28,13 +33,8 @@ function NewBookingForm() {
 
   const fetchData = async () => {
     try {
-      const mockVehicles: Vehicle[] = [
-        { id: 1, plat_nomor: 'B 1234 ABC', jenis_kendaraan: 'Mobil', user_id: 1 },
-        { id: 2, plat_nomor: 'B 5678 XYZ', jenis_kendaraan: 'Motor', user_id: 1 },
-      ];
       const areasData = await parkingAreasAPI.getAll();
       setParkingAreas(Array.isArray(areasData) ? areasData : []);
-      setVehicles(mockVehicles);
     } catch (err) {
       console.error('Failed to fetch data:', err);
     }
@@ -42,21 +42,25 @@ function NewBookingForm() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!selectedArea || !selectedVehicle) {
-      setError('Silakan pilih area parkir dan kendaraan');
+    if (!selectedArea || !selectedVehicleType || !vehiclePlate) {
+      setError('Silakan lengkapi semua field yang diperlukan');
       return;
     }
     setIsLoading(true);
     setError('');
+
     try {
-      const response = await bookingAPI.book({
-        vehicle_id: selectedVehicle,
+      const bookingData: BookingReservationRequest = {
+        vehicle_type: selectedVehicleType,
+        vehicle_plate: vehiclePlate.toUpperCase().replace(/\s/g, ''),
         parking_area_id: selectedArea.id,
         estimated_duration: estimatedDuration ? parseInt(estimatedDuration) : undefined,
-      });
-      router.push(`/booking/success?ticket=${response.data.ticket_code}`);
+      };
+
+      const response = await bookingReservationAPI.book(bookingData);
+      setBookingSuccess(response);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Booking gagal. Silakan coba lagi.');
+      setError(err.response?.data?.message || err.message || 'Booking gagal. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
     }
@@ -71,8 +75,12 @@ function NewBookingForm() {
 
   const occBar = (occ: number) => occ >= 100 ? 'bg-red-400' : occ >= 80 ? 'bg-amber-400' : 'bg-green-400';
 
-  const estimatedCost = estimatedDuration
-    ? Math.max(1, Math.ceil(parseInt(estimatedDuration) / 60)) * 2000
+  const estimatedCost = estimatedDuration && selectedVehicleType && selectedArea
+    ? Math.max(1, Math.ceil(parseInt(estimatedDuration) / 60)) * (
+        selectedVehicleType === 'Mobil'
+            ? (selectedArea.tarifs?.mobil?.tarif_per_jam || 3000)
+            : (selectedArea.tarifs?.motor?.tarif_per_jam || 2000)
+      )
     : null;
 
   return (
@@ -146,45 +154,98 @@ function NewBookingForm() {
             </div>
           </div>
 
-          {/* ── Pilih Kendaraan ── */}
+          {/* ── Pilih Tipe Kendaraan ── */}
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-100">
               <Car size={15} className="text-blue-500" />
-              <span className="text-sm font-bold text-slate-800">Pilih Kendaraan</span>
+              <span className="text-sm font-bold text-slate-800">Pilih Tipe Kendaraan</span>
             </div>
             <div className="p-4 space-y-2.5">
-              {vehicles.map((vehicle) => {
-                const isActive = selectedVehicle === vehicle.id;
-                return (
+              {selectedArea?.tarifs && (
+                <>
                   <label
-                    key={vehicle.id}
-                    className={`flex items-center justify-between p-3.5 rounded-xl border-2 cursor-pointer transition-all
-                      ${isActive
+                    className={`flex items-center justify-between p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+                      selectedVehicleType === 'Mobil'
                         ? 'border-blue-400 bg-blue-50'
                         : 'border-slate-100 hover:border-blue-200 hover:bg-slate-50'
-                      }`}
+                    }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${isActive ? 'bg-blue-200' : 'bg-slate-100'}`}>
-                        <Car size={15} className={isActive ? 'text-blue-600' : 'text-slate-500'} />
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                        selectedVehicleType === 'Mobil' ? 'bg-blue-200' : 'bg-slate-100'
+                      }`}>
+                        <Car size={15} className={selectedVehicleType === 'Mobil' ? 'text-blue-600' : 'text-slate-500'} />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-slate-800">{vehicle.plat_nomor}</p>
-                        <p className="text-xs text-slate-400">{vehicle.jenis_kendaraan}</p>
+                        <p className="text-sm font-semibold text-slate-800">Mobil</p>
+                        <p className="text-xs text-slate-400">Rp {selectedArea.tarifs.mobil?.tarif_per_jam}/jam</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {isActive && <CheckCircle2 size={16} className="text-blue-500" />}
+                      {selectedVehicleType === 'Mobil' && <CheckCircle2 size={16} className="text-blue-500" />}
                       <input
-                        type="radio" name="vehicle" value={vehicle.id}
-                        checked={isActive}
-                        onChange={() => setSelectedVehicle(vehicle.id)}
+                        type="radio" name="vehicleType" value="Mobil"
+                        checked={selectedVehicleType === 'Mobil'}
+                        onChange={() => setSelectedVehicleType('Mobil')}
                         className="sr-only"
                       />
                     </div>
                   </label>
-                );
-              })}
+
+                  <label
+                    className={`flex items-center justify-between p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+                      selectedVehicleType === 'Motor'
+                        ? 'border-blue-400 bg-blue-50'
+                        : 'border-slate-100 hover:border-blue-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                        selectedVehicleType === 'Motor' ? 'bg-blue-200' : 'bg-slate-100'
+                      }`}>
+                        <Car size={15} className={selectedVehicleType === 'Motor' ? 'text-blue-600' : 'text-slate-500'} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">Motor</p>
+                        <p className="text-xs text-slate-400">Rp {selectedArea.tarifs.motor?.tarif_per_jam}/jam</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {selectedVehicleType === 'Motor' && <CheckCircle2 size={16} className="text-blue-500" />}
+                      <input
+                        type="radio" name="vehicleType" value="Motor"
+                        checked={selectedVehicleType === 'Motor'}
+                        onChange={() => setSelectedVehicleType('Motor')}
+                        className="sr-only"
+                      />
+                    </div>
+                  </label>
+                </>
+              )}
+              {!selectedArea && (
+                <div className="text-center py-8 text-slate-400 text-sm">
+                  Silakan pilih area parkir terlebih dahulu
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── Nomor Plat Kendaraan ── */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-100">
+              <Car size={15} className="text-blue-500" />
+              <span className="text-sm font-bold text-slate-800">Nomor Plat Kendaraan</span>
+            </div>
+            <div className="p-4">
+              <input
+                type="text"
+                placeholder="Contoh: B 1234 ABC"
+                value={vehiclePlate}
+                onChange={(e) => setVehiclePlate(e.target.value.toUpperCase())}
+                className="w-full px-4 py-2.5 border-2 border-slate-100 rounded-xl text-sm text-slate-800 bg-slate-50 outline-none focus:border-blue-300 focus:bg-white focus:shadow-sm transition-all placeholder:text-slate-300"
+                style={{ textTransform: 'uppercase' }}
+              />
+              <p className="mt-2 text-xs text-slate-400">Format: B 1234 ABC (tanpa spasi di tengah)</p>
             </div>
           </div>
 
@@ -236,11 +297,11 @@ function NewBookingForm() {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 shadow-lg px-5 py-4">
         <div className="max-w-3xl mx-auto">
           {/* Summary pill */}
-          {(selectedArea || selectedVehicle) && (
+          {(selectedArea || selectedVehicleType) && (
             <div className="flex items-center gap-3 mb-3 px-4 py-2.5 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-500">
               <span className="font-medium text-slate-700 truncate">{selectedArea?.nama_area ?? '—'}</span>
               <span className="text-slate-300">·</span>
-              <span className="truncate">{vehicles.find(v => v.id === selectedVehicle)?.plat_nomor ?? '—'}</span>
+              <span className="truncate">{selectedVehicleType ?? '—'}</span>
             </div>
           )}
           <button
@@ -251,7 +312,7 @@ function NewBookingForm() {
               const form = document.querySelector('form');
               form?.requestSubmit();
             }}
-            disabled={isLoading || !selectedArea || !selectedVehicle}
+            disabled={isLoading || !selectedArea || !selectedVehicleType || !vehiclePlate}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-blue-400 to-blue-600 text-white text-sm font-semibold shadow-md shadow-blue-200 hover:opacity-90 active:scale-[0.98] transition-all disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed"
           >
             {isLoading
@@ -262,18 +323,65 @@ function NewBookingForm() {
         </div>
       </div>
 
-    </div>
-  );
-}
+      {/* Booking Success Modal */}
+      {bookingSuccess && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 size={32} className="text-green-600" />
+              </div>
 
-export default function NewBookingPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="w-10 h-10 rounded-full border-4 border-blue-200 border-t-blue-500 animate-spin" />
-      </div>
-    }>
-      <NewBookingForm />
-    </Suspense>
+              <h2 className="text-lg font-bold text-slate-800 mb-2">Booking Berhasil!</h2>
+              <p className="text-sm text-slate-600 mb-4">
+                Booking Anda telah dibuat. Silakan check-in saat tiba di lokasi.
+              </p>
+
+              <div className="bg-slate-50 rounded-xl p-4 mb-4">
+                <div className="text-center mb-3">
+                  <QrCode size={48} className="text-blue-600 mx-auto" />
+                </div>
+                <p className="text-xs font-mono text-slate-700 mb-1">Kode Booking:</p>
+                <p className="text-lg font-bold text-blue-600">{bookingSuccess.ticket_code}</p>
+              </div>
+
+              <div className="space-y-2 text-left text-sm text-slate-600 mb-4">
+                <div className="flex justify-between">
+                  <span>Area:</span>
+                  <span className="font-medium">{bookingSuccess.parking_area.nama_area}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Kendaraan:</span>
+                  <span className="font-medium">{bookingSuccess.vehicle_type} - {bookingSuccess.vehicle_plate}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Waktu:</span>
+                  <span className="font-medium">{new Date(bookingSuccess.booking_time).toLocaleString('id-ID')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Kadaluarsa:</span>
+                  <span className="font-medium text-amber-600">{new Date(bookingSuccess.expires_at).toLocaleString('id-ID')}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setBookingSuccess(null)}
+                  className="flex-1 px-4 py-2 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-sm font-medium"
+                >
+                  Tutup
+                </button>
+                <button
+                  onClick={() => router.push('/booking/my-bookings')}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm font-medium"
+                >
+                  Lihat Booking
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

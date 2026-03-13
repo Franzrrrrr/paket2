@@ -87,6 +87,12 @@ export default function DashboardPage() {
               Halo, <span className="font-semibold text-slate-700">{user?.name}</span>
             </span>
             <button
+              onClick={() => router.push('/booking/my-bookings')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 text-xs font-medium hover:border-blue-300 hover:text-blue-500 hover:bg-blue-50 transition-all"
+            >
+              <Car size={13} /> Booking Saya
+            </button>
+            <button
               onClick={handleLogout}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 text-xs font-medium hover:border-blue-300 hover:text-blue-500 hover:bg-blue-50 transition-all"
             >

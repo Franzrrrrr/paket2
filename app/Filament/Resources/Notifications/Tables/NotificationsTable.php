@@ -7,9 +7,9 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\BulkAction;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Builder;
 
 class NotificationsTable
@@ -105,8 +105,7 @@ class NotificationsTable
                                     $record->markAsRead();
                                 }
                             }
-                        })
-                        ->deselectRecordsAfterAction(),
+                        }),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');

@@ -260,6 +260,19 @@ export default function LoginPage() {
             </button>
           </form>
 
+          <p className="lp-footer">
+            Belum punya akun?
+            <a
+              href="/register"
+              style={{
+                color: '#3b82f6',
+                textDecoration: 'none',
+                fontWeight: 500
+              }}
+            >
+              Daftar di sini
+            </a>
+          </p>
           <p className="lp-footer">ParkirKu © {new Date().getFullYear()}</p>
         </div>
       </div>

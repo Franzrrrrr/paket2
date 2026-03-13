@@ -92,6 +92,44 @@ export interface LoginResponse {
   token: string;
 }
 
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+  role: 'owner';
+}
+
+export interface BookingReservationRequest {
+  vehicle_type: 'Mobil' | 'Motor';
+  vehicle_plate: string;
+  parking_area_id: number;
+  estimated_duration?: number;
+  notes?: string;
+}
+
+export interface BookingResponse {
+  id: number;
+  ticket_code: string;
+  vehicle_type: string;
+  vehicle_plate: string;
+  parking_area: {
+    id: number;
+    nama_area: string;
+    alamat: string;
+  };
+  booking_time: string;
+  check_in_time?: string;
+  estimated_duration?: number;
+  status: string;
+  can_check_in: boolean;
+  expires_at: string;
+}
+
+export interface CheckInRequest {
+  ticket_code: string;
+}
+
 export interface BookingRequest {
   vehicle_type?: string;
   vehicle_id?: number;
@@ -107,6 +145,10 @@ export interface ExitRequest {
 export const authAPI = {
   login: async (email: string, password: string): Promise<LoginResponse> => {
     const response = await api.post('/login', { email, password });
+    return response.data;
+  },
+  register: async (data: RegisterRequest): Promise<LoginResponse> => {
+    const response = await api.post('/register', data);
     return response.data;
   },
 };
@@ -146,6 +188,26 @@ export const bookingAPI = {
       if (error.response?.status === 404) return null;
       throw error;
     }
+  },
+};
+
+// Booking Reservation API
+export const bookingReservationAPI = {
+  book: async (data: BookingReservationRequest): Promise<BookingResponse> => {
+    const response = await api.post('/booking-reservation', data);
+    return response.data;
+  },
+  checkIn: async (data: CheckInRequest): Promise<any> => {
+    const response = await api.post('/booking-reservation/check-in', data);
+    return response.data;
+  },
+  myBookings: async (): Promise<{ bookings: BookingResponse[] }> => {
+    const response = await api.get('/booking-reservation/my-bookings');
+    return response.data;
+  },
+  cancel: async (id: number): Promise<any> => {
+    const response = await api.delete(`/booking-reservation/${id}`);
+    return response.data;
   },
 };
 
