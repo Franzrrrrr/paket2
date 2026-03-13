@@ -7,6 +7,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BookingReservationController;
+use App\Http\Controllers\QRCodeController;
+use App\Http\Controllers\QRScanController;
 use App\Http\Controllers\ParkingSessionController;
 
 Route::get('/', function (Request $request) {
@@ -20,7 +22,20 @@ Route::get('/area-parkir', [AreaParkirController::class, 'index']);
 Route::get('/area-parkir/{id}', [AreaParkirController::class, 'show']);
 Route::get('/area-parkir/parked-vehicles', [AreaParkirController::class, 'parkedVehicles']);
 
+// Test QR scan without auth
+Route::get('/qr-scan-test', [QRScanController::class, 'getDemoQRCodes']);
+
 Route::middleware('auth:sanctum')->group(function(){
+    // QR Code routes
+    Route::get('/qr-code/area/{areaId}', [QRCodeController::class, 'generateAreaQR']);
+    Route::get('/qr-code/booking/{bookingId}', [QRCodeController::class, 'generateBookingQR']);
+    Route::get('/qr-code/my-codes', [QRCodeController::class, 'getMyQRCodes']);
+    Route::post('/qr-code/validate', [QRCodeController::class, 'validateQR']);
+
+    // QR Scan routes (for development testing)
+    Route::post('/qr-scan/upload', [QRScanController::class, 'uploadAndScan']);
+    Route::get('/qr-scan/demo', [QRScanController::class, 'getDemoQRCodes']);
+
     // Booking reservation routes
     Route::post('/booking-reservation', [BookingReservationController::class, 'book']);
     Route::post('/booking-reservation/check-in', [BookingReservationController::class, 'checkIn']);

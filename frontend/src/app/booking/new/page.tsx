@@ -346,21 +346,29 @@ export default function NewBookingPage() {
               </div>
 
               <div className="space-y-2 text-left text-sm text-slate-600 mb-4">
+                {/* Debug: Log actual data structure */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="bg-yellow-50 p-2 rounded text-xs mb-2">
+                    <strong>Debug Data:</strong>
+                    <pre className="text-xs">{JSON.stringify(bookingSuccess, null, 2)}</pre>
+                  </div>
+                )}
+
                 <div className="flex justify-between">
                   <span>Area:</span>
-                  <span className="font-medium">{bookingSuccess.parking_area.nama_area}</span>
+                  <span className="font-medium">{bookingSuccess?.parking_area?.nama_area || 'Loading...'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Kendaraan:</span>
-                  <span className="font-medium">{bookingSuccess.vehicle_type} - {bookingSuccess.vehicle_plate}</span>
+                  <span className="font-medium">{bookingSuccess?.vehicle_type} - {bookingSuccess?.vehicle_plate}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Waktu:</span>
-                  <span className="font-medium">{new Date(bookingSuccess.booking_time).toLocaleString('id-ID')}</span>
+                  <span className="font-medium">{bookingSuccess?.booking_time ? new Date(bookingSuccess.booking_time).toLocaleString('id-ID') : 'Loading...'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Kadaluarsa:</span>
-                  <span className="font-medium text-amber-600">{new Date(bookingSuccess.expires_at).toLocaleString('id-ID')}</span>
+                  <span className="font-medium text-amber-600">{bookingSuccess?.expires_at ? new Date(bookingSuccess.expires_at).toLocaleString('id-ID') : 'Loading...'}</span>
                 </div>
               </div>
 

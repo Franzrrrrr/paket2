@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { bookingReservationAPI, BookingResponse } from '@/lib/api';
-import { ArrowLeft, Car, Clock, CheckCircle2, QrCode, AlertCircle, X } from 'lucide-react';
+import { ArrowLeft, Car, Clock, CheckCircle2, QrCode, AlertCircle, X, Upload } from 'lucide-react';
 
 export default function MyBookingsPage() {
   const router = useRouter();
@@ -40,7 +40,7 @@ export default function MyBookingsPage() {
 
   const handleCancel = async (bookingId: number) => {
     if (!confirm('Apakah Anda yakin ingin membatalkan booking ini?')) return;
-    
+
     try {
       await bookingReservationAPI.cancel(bookingId);
       await fetchBookings(); // Refresh bookings
@@ -130,19 +130,28 @@ export default function MyBookingsPage() {
               <Car size={48} className="text-slate-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-slate-700 mb-2">Belum Ada Booking</h3>
               <p className="text-slate-500 mb-6">Anda belum memiliki booking. Buat booking sekarang!</p>
-              <button
-                onClick={() => router.push('/booking/new')}
-                className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
-              >
-                Buat Booking
-              </button>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => router.push('/booking/new')}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Buat Booking
+                </button>
+                <button
+                  onClick={() => router.push('/booking/scan-upload')}
+                  className="px-6 py-2 border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors font-medium"
+                >
+                  <Upload size={16} className="inline mr-2" />
+                  Scan QR
+                </button>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
               {bookings.map((booking) => {
                 const statusColor = getStatusColor(booking.status);
                 const isExpired = new Date(booking.expires_at) < new Date();
-                
+
                 return (
                   <div key={booking.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                     <div className="p-5">
@@ -240,7 +249,7 @@ export default function MyBookingsPage() {
                 <X size={20} />
               </button>
             </div>
-            
+
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-slate-500">Kode Booking:</span>
@@ -248,7 +257,7 @@ export default function MyBookingsPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Area:</span>
-                <span className="font-medium">{selectedBooking.parking_area.nama_area}</span>
+                <span className="font-medium">{selectedBooking.parking_area?.nama_area || 'Loading...'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Kendaraan:</span>

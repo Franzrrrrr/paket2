@@ -126,6 +126,7 @@ class BookingController extends Controller
 
         $parkingArea->increment('terisi');
 
+        \Log::info('Transaksi: ' . $transaksi->toJson());
         $transaksi = Transaksi::create([
             'user_id' => $user->id,
             'kendaraan_id' => $vehicle->id,
@@ -135,6 +136,8 @@ class BookingController extends Controller
             'status' => 'masuk',
             'ticket_code' => $ticketCode,
         ]);
+
+        \Log::info('Transaksi created: ' . $transaksi->toJson());
 
         $executionTime = microtime(true) - $startTime;
 
@@ -165,11 +168,21 @@ class BookingController extends Controller
         );
 
         return response()->json([
-            'message' => 'Booking berhasil',
+            'message'      => 'Booking berhasil',
+            'ticket_code'  => $ticketCode,
+            'booking_time' => $parkingSession->entry_time,
+            'expires_at'   => now()->addHours(2)->toISOString(), // booking expired dalam 2 jam
+            'vehicle_type' => $vehicle->jenis_kendaraan,
+            'vehicle_plate'=> $vehicle->plat_nomor,
+            'parking_area' => [
+                'id'        => $parkingArea->id,
+                'nama_area' => $parkingArea->nama_area,
+                'alamat'    => $parkingArea->alamat,
+            ],
             'data' => [
-                'ticket_code' => $ticketCode,
+                'ticket_code'     => $ticketCode,
                 'parking_session' => $parkingSession->load(['vehicle', 'parkingArea']),
-                'entry_time' => $parkingSession->entry_time
+                'entry_time'      => $parkingSession->entry_time,
             ]
         ]);
     }

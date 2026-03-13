@@ -13,9 +13,9 @@ class Transaksi extends Model
         'durasi_jam',
         'biaya_total',
         'status',
+        'tarif_id',
         'user_id',
         'area_id',
-        'tarif_id',
     ];
 
     protected $casts = [

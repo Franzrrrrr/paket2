@@ -211,6 +211,45 @@ export const bookingReservationAPI = {
   },
 };
 
+// QR Code API
+export const qrCodeAPI = {
+  generateAreaQR: async (areaId: number): Promise<any> => {
+    const response = await api.get(`/qr-code/area/${areaId}`);
+    return response.data;
+  },
+  generateBookingQR: async (bookingId: number): Promise<any> => {
+    const response = await api.get(`/qr-code/booking/${bookingId}`);
+    return response.data;
+  },
+  getMyQRCodes: async (): Promise<{ qr_codes: any[]; areas: any[] }> => {
+    const response = await api.get('/qr-code/my-codes');
+    return response.data;
+  },
+  validateQR: async (qrData: string): Promise<any> => {
+    const response = await api.post('/qr-code/validate', { qr_data: qrData });
+    return response.data;
+  },
+};
+
+// QR Scan API (for development testing)
+export const qrScanAPI = {
+  uploadAndScan: async (file: File): Promise<any> => {
+    const formData = new FormData();
+    formData.append('qr_image', file);
+
+    const response = await api.post('/qr-scan/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+  getDemoQRCodes: async (): Promise<any> => {
+    const response = await api.get('/qr-scan/demo');
+    return response.data;
+  },
+};
+
 // Parking Sessions API
 export const parkingSessionsAPI = {
   getAll: async (params?: {

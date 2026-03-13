@@ -14,15 +14,15 @@ class KendaraanForm
             ->components([
                 Select::make('user_id')
                     ->label('Pemilik User')
-                    ->required()
-                    ->options(fn () => \App\Models\User::all()->pluck('name', 'id')),
+                    ->searchable()
+                    ->preload()
+                    ->options(\App\Models\User::role('owner')->pluck('name', 'id'))
+                    ->required(),
                 TextInput::make('plat_nomor')
                     ->required(),
                 Select::make('jenis_kendaraan')
                     ->options(['motor' => 'Motor', 'mobil' => 'Mobil'])
                     ->default('motor')
-                    ->required(),
-                TextInput::make('pemilik')
                     ->required(),
             ]);
     }

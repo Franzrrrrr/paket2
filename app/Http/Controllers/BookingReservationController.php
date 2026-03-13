@@ -36,9 +36,9 @@ class BookingReservationController extends Controller
         $user = $request->user();
         $parkingArea = AreaParkir::findOrFail($request->parking_area_id);
 
-        // Check if user has active booking
+        // Check if user has active bookingwwwwww
         $activeBooking = Booking::where('user_id', $user->id)
-            ->whereIn('status', [Booking::STATUS_BOOKED, Booking::STATUS_CHECKED_IN])
+            ->whereIn('status', [Booking::STATUS_BOOKED ])
             ->first();
 
         if ($activeBooking) {
@@ -103,6 +103,7 @@ class BookingReservationController extends Controller
      */
     public function checkIn(Request $request): JsonResponse
     {
+
         $request->validate([
             'ticket_code' => 'required|string|exists:bookings,ticket_code'
         ]);
@@ -135,8 +136,18 @@ class BookingReservationController extends Controller
             ], 422);
         }
 
+        // Check if parking session already exists for this booking
+        $existingSession = ParkingSession::where('ticket_code', $booking->ticket_code)->first();
+        if ($existingSession) {
+            return response()->json([
+                'message' => 'Booking sudah check-in sebelumnya',
+                'session_id' => $existingSession->id
+            ], 422);
+        }
+
         // Check parking area capacity
         $parkingArea = $booking->parkingArea;
+        // \Log::info($parkingArea->toArray());
         if ($parkingArea->terisi >= $parkingArea->kapasitas) {
             return response()->json([
                 'message' => 'Area parkir sudah penuh'
@@ -151,6 +162,13 @@ class BookingReservationController extends Controller
                 'user_id' => $user->id,
             ]
         );
+
+        // Get tarif_id from area parkir based on vehicle type
+        $tarif = $parkingArea->tarifs()
+            ->where('jenis_kendaraan', $booking->vehicle_type)
+            ->first();
+
+        \Log::info('tarif id: ' . $tarif->id);
 
         // Create parking session
         $parkingSession = ParkingSession::create([
@@ -169,6 +187,7 @@ class BookingReservationController extends Controller
             'kendaraan_id' => $vehicle->id,
             'waktu_masuk' => now(),
             'status' => 'masuk',
+            'tarif_id' => $tarif->id,
             'user_id' => $user->id,
             'area_id' => $booking->parking_area_id,
         ]);
@@ -221,7 +240,7 @@ class BookingReservationController extends Controller
     public function myBookings(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         $bookings = Booking::where('user_id', $user->id)
             ->with('parkingArea')
             ->with('parkingSession')
