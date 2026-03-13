@@ -4,6 +4,7 @@ FROM php:8.3-cli
 RUN apt-get update && apt-get install -y \
     libicu-dev libzip-dev libpng-dev libjpeg-dev \
     libfreetype6-dev libonig-dev unzip git curl \
+    bison re2c \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
         intl zip gd pdo pdo_mysql \
