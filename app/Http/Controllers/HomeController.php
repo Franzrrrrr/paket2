@@ -14,7 +14,7 @@ class HomeController extends Controller
      */
     public function bookingPage(): View
     {
-        $areas = AreaParkir::where('status', 'aktif')->get();
+        $areas = AreaParkir::get();
         return view('booking.index', compact('areas'));
     }
 
