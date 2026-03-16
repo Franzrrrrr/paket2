@@ -67,7 +67,6 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotificationsPolling('5')
             ->font('Poppins')
             ->brandName('Smart Parking')
-            ->spa()
-            ->viteTheme('resources/css/filament/admin/theme.css');
+            ->spa();
     }
 }
