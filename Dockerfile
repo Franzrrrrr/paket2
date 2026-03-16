@@ -17,9 +17,11 @@ COPY composer.json composer.lock ./
 RUN composer install --optimize-autoloader --no-dev --no-scripts --no-interaction
 
 COPY package*.json ./
-RUN npm install && npm run build
 
 COPY . .
+
+RUN npm install && npm run build
+
 
 RUN chmod -R 775 storage bootstrap/cache
 
