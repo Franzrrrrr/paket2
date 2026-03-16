@@ -2,7 +2,7 @@ FROM php:8.3-cli
 
 RUN apt-get update && apt-get install -y \
     libicu-dev libzip-dev libpng-dev libjpeg-dev \
-    libfreetype6-dev libonig-dev unzip git curl \
+    libfreetype6-dev libonig-dev unzip git curl nodejs npm \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
         intl zip gd pdo pdo_mysql \
@@ -16,18 +16,18 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 RUN composer install --optimize-autoloader --no-dev --no-scripts --no-interaction
 
+COPY package*.json ./
+RUN npm install && npm run build
+
 COPY . .
 
 RUN chmod -R 775 storage bootstrap/cache
 
 EXPOSE 8080
 
-# Debug: print env vars dulu sebelum migrate
 CMD echo "=== ENV CHECK ===" \
     && echo "DB_HOST=$DB_HOST" \
-    && echo "DB_PORT=$DB_PORT" \
     && echo "DB_DATABASE=$DB_DATABASE" \
-    && echo "DB_CONNECTION=$DB_CONNECTION" \
     && php artisan config:clear \
     && php artisan config:cache \
     && php artisan migrate --force \
