@@ -9,16 +9,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('area_parkirs', function (Blueprint $table) {
-            $table->decimal('latitude', 12, 9)->nullable()->change();
-            $table->decimal('longitude', 12, 9)->nullable()->change();
+            $table->decimal('latitude', 12, 9)->nullable();
+            $table->decimal('longitude', 12, 9)->nullable();
         });
     }
 
     public function down(): void
     {
         Schema::table('area_parkirs', function (Blueprint $table) {
-            $table->decimal('latitude', 10, 7)->nullable()->change();
-            $table->decimal('longitude', 10, 7)->nullable()->change();
+            $table->dropColumn(['latitude' ,'longitude']);
         });
     }
 };
