@@ -56,6 +56,11 @@ php artisan view:clear
 - Base: `https://your-app-name.railway.app/api`
 - Documentation: Swagger di `/api/documentation`
 
+### Health Check
+- Simple: `https://your-app-name.railway.app/up` (Laravel default)
+- Detailed: `https://your-app-name.railway.app/health`
+- Ping: `https://your-app-name.railway.app/ping`
+
 ## 🔧 Local Development vs Production
 
 ### Routes Setup
@@ -81,6 +86,20 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://your-app-name.r
 2. **Database**: Verify connection string
 3. **Permissions**: Jalankan `php artisan storage:link`
 4. **Cache**: Clear cache dengan `php artisan optimize:clear`
+
+### Health Check Issues
+```bash
+# Test health endpoints
+curl https://your-app.railway.app/up
+curl https://your-app.railway.app/ping
+curl https://your-app.railway.app/health
+
+# Common fixes:
+1. Check database connection in Railway dashboard
+2. Verify APP_URL matches Railway domain
+3. Ensure migrations ran successfully
+4. Check logs in Railway dashboard
+```
 
 ### Logs Check
 ```bash
