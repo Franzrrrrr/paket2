@@ -5,7 +5,7 @@
     "scripts": {
         "dev": "concurrently \"php artisan serve\" \"npm run dev:frontend\"",
         "dev:frontend": "cd frontend && npm run dev",
-        "build": "npm run build",
+        "build": "vite build",
         "build:backend": "composer install --no-dev --optimize-autoloader",
         "migrate": "php artisan migrate",
         "seed": "php artisan db:seed"
