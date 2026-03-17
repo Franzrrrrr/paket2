@@ -19,6 +19,7 @@ RUN composer install --optimize-autoloader --no-dev --no-scripts --no-interactio
 COPY . .
 
 RUN npm install && npm run build
+RUN php artisan filament:assets --no-interaction
 RUN chmod -R 775 storage bootstrap/cache
 
 EXPOSE 8080
@@ -26,10 +27,7 @@ EXPOSE 8080
 CMD php artisan config:clear \
     && php artisan config:cache \
     && php artisan migrate --force \
-    && php artisan shield:generate --all --no-interaction \
-    && php artisan shield:generate --all --panel=admin --option=[yes,yes] \
+    && php artisan db:seed --force \
+    && php artisan shield:generate --all --ignore-config-guard-checks --no-interaction \
+    && php artisan shield:super-admin --user=admin@example.com --no-interaction; \
     php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
-
-# && php artisan db:seed --force \
-# && php artisan filament:assets \
-
