@@ -21,5 +21,6 @@ class DatabaseSeeder extends Seeder
     //    $this->call(KendaraanSeeder::class);
     //    $this->call(TransaksiSeeder::class);
     //    $this->call(LogAktivitasSeeder::class);
+       $this->call(ShieldGenerateSeeder::class);
     }
 }
