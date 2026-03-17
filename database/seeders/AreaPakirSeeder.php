@@ -13,24 +13,24 @@ class AreaPakirSeeder extends Seeder
      */
     public function run(): void
     {
-        AreaParkir::firstOrCreate(
-            ['nama_area' => 'Area A - Lantai 1'],
-            ['kapasitas' => 50, 'terisi' => 30]
-        );
+        // AreaParkir::firstOrCreate(
+        //     ['nama_area' => 'Area A - Lantai 1'],
+        //     ['kapasitas' => 50, 'terisi' => 30]
+        // );
 
-        AreaParkir::firstOrCreate(
-            ['nama_area' => 'Area B - Lantai 2'],
-            ['kapasitas' => 40, 'terisi' => 25]
-        );
+        // AreaParkir::firstOrCreate(
+        //     ['nama_area' => 'Area B - Lantai 2'],
+        //     ['kapasitas' => 40, 'terisi' => 25]
+        // );
 
-        AreaParkir::firstOrCreate(
-            ['nama_area' => 'Area C - Lantai 3'],
-            ['kapasitas' => 60, 'terisi' => 45]
-        );
+        // AreaParkir::firstOrCreate(
+        //     ['nama_area' => 'Area C - Lantai 3'],
+        //     ['kapasitas' => 60, 'terisi' => 45]
+        // );
 
-        AreaParkir::firstOrCreate(
-            ['nama_area' => 'Area D - Basement'],
-            ['kapasitas' => 80, 'terisi' => 60]
-        );
+        // AreaParkir::firstOrCreate(
+        //     ['nama_area' => 'Area D - Basement'],
+        //     ['kapasitas' => 80, 'terisi' => 60]
+        // );
     }
 }
