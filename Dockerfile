@@ -18,8 +18,6 @@ RUN composer install --optimize-autoloader --no-dev --no-scripts --no-interactio
 
 COPY . .
 
-# v
-
 RUN npm install && npm run build
 RUN chmod -R 775 storage bootstrap/cache
 
@@ -29,7 +27,7 @@ CMD php artisan config:clear \
     && php artisan config:cache \
     && php artisan filament:assets \
     && php artisan migrate --force \
-    && php artisan shield:generate --all --no-interaction \
     && php artisan db:seed --force \
+    && php artisan shield:generate --all --no-interaction \
     && php artisan shield:super-admin --user=admin@example.com --no-interaction; \
     php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
