@@ -28,6 +28,6 @@ CMD php artisan config:clear \
     && php artisan config:cache \
     && php artisan migrate --force \
     && php artisan db:seed --force \
-    && php artisan shield:generate --all --ignore-config-guard-checks --no-interaction \
+    php artisan shield:generate --all --panel=admin --option=[yes,yes] \
     && php artisan shield:super-admin --user=admin@example.com --no-interaction; \
     php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
