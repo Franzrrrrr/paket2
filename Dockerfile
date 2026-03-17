@@ -27,7 +27,8 @@ CMD php artisan config:clear \
     && php artisan config:cache \
     && php artisan filament:assets \
     && php artisan migrate --force \
-    && php artisan db:seed --force \
     && php artisan shield:generate --all --no-interaction \
     && php artisan shield:generate --all --panel=admin --option=[yes,yes] \
     php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+
+# && php artisan db:seed --force \
