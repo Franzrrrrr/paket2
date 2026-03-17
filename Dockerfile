@@ -18,6 +18,8 @@ RUN composer install --optimize-autoloader --no-dev --no-scripts --no-interactio
 
 COPY . .
 
+# v
+
 RUN npm install && npm run build
 RUN chmod -R 775 storage bootstrap/cache
 
